@@ -62,3 +62,7 @@ The file `posterior_dpmm.R` contains the function _posterior_dpmm(patient, sampl
   - cat_vars: character vector of names for categorical variables (should be NULL if no categorical variables in the model)
 This function makes conditional predictions from a DPMM for a mixture of continuous and categorical variables.
 
+---
+### Demo
+
+The file `demo.R` includes code for several capabilities of the DPMM model. This file explores all 6 datasets and all post-processing functions.
