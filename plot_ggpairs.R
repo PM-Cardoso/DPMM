@@ -191,8 +191,8 @@ plot.ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
       
       my_dens_lower <- function(data, mapping, ...) {
         ggplot(mapping=mapping) +
-          geom_density2d(data = filter(data, Data == "Original"), size = 1.2, alpha = 0.7, colour = "#00BFC4") +
-          geom_density2d(data = filter(data, Data == "DPMM"), size = 1.2, alpha = 0.7, colour = '#F8766D')
+          geom_density2d(data = filter(data, Data == "Original"), linewidth = 1.2, alpha = 0.7, colour = "#00BFC4") +
+          geom_density2d(data = filter(data, Data == "DPMM"), linewidth = 1.2, alpha = 0.7, colour = '#F8766D')
       }
       
       my_dens_diagonal <- function(data, mapping, ...) {
@@ -235,7 +235,7 @@ plot.ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
       
       my_dens_lower <- function(data, mapping, ...) {
         ggplot(mapping=mapping) +
-          geom_density2d(data = filter(data, Data == "DPMM"), size = 1.2, alpha = 0.7, colour = '#F8766D')
+          geom_density2d(data = filter(data, Data == "DPMM"), linewidth = 1.2, alpha = 0.7, colour = '#F8766D')
       }
       
       my_dens_diagonal <- function(data, mapping, ...) {

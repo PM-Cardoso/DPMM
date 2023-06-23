@@ -262,7 +262,7 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
         cmodel <- compileNimble(model)
         
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "x_disc_miss"), thin = 1)
+        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "x_disc_miss"), thin = 1, print = FALSE)
         
         
         source("conditional_RW.R")
@@ -472,7 +472,7 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
           cmodel <- compileNimble(model)
           
           #set monitors
-          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss"), thin = 1)
+          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss"), thin = 1, print = FALSE)
           
           
           source("conditional_RW.R")
@@ -684,7 +684,7 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
           cmodel <- compileNimble(model)
           
           #set monitors
-          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_disc_miss"), thin = 1)
+          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_disc_miss"), thin = 1, print = FALSE)
           
           
         }
@@ -817,7 +817,7 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
       cmodel <- compileNimble(model)
       
       #set monitors
-      config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL"), thin = 1)
+      config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL"), thin = 1, print = FALSE)
       
           
     }
@@ -951,7 +951,7 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
         cmodel <- compileNimble(model)
         
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "x_cont_miss"), thin = 1)
+        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "x_cont_miss"), thin = 1, print = FALSE)
         
         
         ## add custom sampler
@@ -1073,7 +1073,7 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
         cmodel <- compileNimble(model)
         
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha"), thin = 1)
+        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha"), thin = 1, print = FALSE)
         
       }
       
@@ -1212,7 +1212,7 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
         cmodel <- compileNimble(model)
         
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "x_disc_miss"), thin = 1)
+        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "x_disc_miss"), thin = 1, print = FALSE)
         
 
       } else {
@@ -1312,14 +1312,15 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
         cmodel <- compileNimble(model)
         
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL"), thin = 1)
+        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL"), thin = 1, print = FALSE)
         
       }
     }
     
   }
-  
-  
+  ## print config
+  print(config)
+    
   # build the model
   built <- buildMCMC(config)
   # compile model

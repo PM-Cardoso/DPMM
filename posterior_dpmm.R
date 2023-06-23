@@ -234,7 +234,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         mutate(tauL = map(tauL, function(tau) {
           tauL <- matrix(unlist(tauL), ncol = number_vars)
           
-          for (i in 1:sqrt(lengths(tauL))) {
+          for (i in 1:sqrt(length(tauL))) {
             tauL[-i,i] = tauL[i,-i]
           }
           tauL
@@ -421,7 +421,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         mutate(tauL = map(tauL, function(tau) {
           tauL <- matrix(unlist(tauL), ncol = number_vars)
           
-          for (i in 1:sqrt(lengths(tauL))) {
+          for (i in 1:sqrt(length(tauL))) {
             tauL[-i,i] = tauL[i,-i]
           }
           tauL
