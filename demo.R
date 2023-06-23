@@ -275,12 +275,12 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 # Note: Dataset 2 contains two separate clusters
 #   with the continuous values (X1, X2) perfectly explaining
 #   which cluster the individual is part of
-cbind(posteriors$samples$`x_disc_miss[1, 1]`[1000:2500], rep(as.numeric(dataset[2,3]), 1500)) %>%
+cbind(posteriors$samples$`x_disc_miss[1, 1]`[1000:2500], rep(as.numeric(dataset[2,3]), 1501)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
 
-cbind(posteriors$samples$`x_disc_miss[2, 1]`[1000:2500], rep(as.numeric(dataset[501,3]), 1500)) %>%
+cbind(posteriors$samples$`x_disc_miss[2, 1]`[1000:2500], rep(as.numeric(dataset[501,3]), 1501)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
