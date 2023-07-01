@@ -3,7 +3,7 @@ library(coda)
 library(GGally)
 
 plot.ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) {
-  
+
   if (missing(iterations) && missing(nburn)) stop("'nburn' or 'iterations' must be provided")
   if (!missing(iterations) && !missing(nburn)) stop("'nburn' or 'iterations' cannot be used at same time")
   if (!missing(iterations)) {
@@ -14,129 +14,84 @@ plot.ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
   }
   if (!missing(newdata) && !missing(iterations)) stop("'newdata' can only be used with 'nburn'")
   if (!missing(newdata) && missing(nburn)) stop("'nburn' is required when supplying 'newdata'")
-  
+  if (class(x) != "dpmm_fit") stop("'x' must be class 'dpmm_fit'")
   
   if (missing(x))  {
     stop("'x' needs to be supplied")
   } else {
-    if (class(x) == "dpmm_fit") {
       
-      discrete <- dplyr::select(x$dataset, where(Negate(is.numeric)))
+    discrete <- dplyr::select(x$dataset, where(Negate(is.numeric)))
+    
+    if(!missing(newdata)) {
+      ## check newdata
+      if(!is.data.frame(newdata)) stop("'newdata' must be a data.frame")
+      if(!all(colnames(newdata) %in% colnames(x$dataset))) stop("Incorrect column names for 'x'")
       
-      if(!missing(newdata)) {
-        ## check newdata
-        if(!is.data.frame(newdata)) stop("'newdata' must be a data.frame")
-        if(!all(colnames(newdata) %in% colnames(x$dataset))) stop("Incorrect column names for 'x'")
-        
-        ## check all variables are present
-        if(ncol(newdata) != ncol(x$dataset)) stop("'newdata' columns do not mathc 'x$dataset'")
-        
-        ## reorder newdata to match original data set
-        newdata <- dplyr::select(newdata, !!colnames(x$dataset))
-        
-        ## check variables match
-        if(!identical(
-          summarise(newdata, across(everything(), class)),
-          summarise(x$dataset, across(everything(), class))
-        )) stop("'newdata' and 'x$dataset' have different column classes")
-        
-        
+      ## check all variables are present
+      if(ncol(newdata) != ncol(x$dataset)) stop("'newdata' columns do not mathc 'x$dataset'")
+      
+      ## reorder newdata to match original data set
+      newdata <- dplyr::select(newdata, !!colnames(x$dataset))
+      
+      ## check variables match
+      if(!identical(
+        summarise(newdata, across(everything(), class)),
+        summarise(x$dataset, across(everything(), class))
+      )) stop("'newdata' and 'x$dataset' have different column classes")
+      
+      if (x$mcmc_chains == 1) {
         number_samples <- nrow(x$samples)
-        
-        if ((nrow(newdata) > length((nburn+1):number_samples))) stop("not enough samples to compare against the dataset")
-        
-        
-        samples <- x$samples[ceiling(seq(nburn+1, number_samples, length.out = nrow(newdata))),]
-        class(samples) <- c("tbl_df", "tbl", "data.frame")
-        
-        object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise)
-        
-        
-        
       } else {
-        
-        #in case only one posterior samples is given
-        number_samples <- nrow(x$samples)
-        if (min(ceiling(iterations)) < 1 || max(ceiling(iterations)) > max(nrow(x$samples))) stop("number of iterations does not match mcmc samples")
-        
-        samples <- x$samples[ceiling(iterations),]
-        class(samples) <- c("tbl_df", "tbl", "data.frame")
-        
-        object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise)
-         
+        number_samples <- nrow(x$samples[[1]])
       }
+      
+      if ((nrow(newdata) > length((nburn+1):number_samples))) stop("not enough samples to compare against the dataset")
+      
+      iterations <- seq(nburn, number_samples, 1)
+      
+      if (x$mcmc_chains == 1) {
+        samples <- x$samples[ceiling(iterations),]
+      } else {
+        samples <- x$samples
+        for (i in 1:x$mcmc_chains) {
+          samples[[i]] <- samples[[i]][ceiling(iterations),]
+        }
+      }
+      # class(samples) <- c("tbl_df", "tbl", "data.frame")
+      
+      object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise, mcmc_chains = x$mcmc_chains)
+      
       
       
     } else {
-      #in case there is more than one dataset given
-      if (!is.list(x)) stop("'x' must be of class(dpmm_fit) or 'list'")
-      samples <- NULL
       
-      discrete <- dplyr::select(x[[1]]$dataset, where(Negate(is.numeric)))
+      #in case only one posterior samples is given
+      if (x$mcmc_chains == 1) {
+        number_samples <- nrow(x$samples)
+      } else {
+        number_samples <- nrow(x$samples[[1]])
+      }
       
-      for (number_list in 1:length(x)) {
-        
-        
-        ## if newdata is missing, then just generate random samples from posterior
-        if(!missing(newdata)) {
-          ## check newdata
-          if(!is.data.frame(newdata)) stop("'newdata' must be a data.frame")
-          if(!all(colnames(newdata) %in% colnames(x[[number_list]]$dataset))) {
-            title <-paste0("Incorrect column names for 'x ", number_list,"'")
-            stop(title)
-          }
-          
-          ## check all variables are present
-          if(ncol(newdata) != ncol(x[[number_list]]$dataset)) {
-            title <- paste0("'newdata' columns do not mathc 'x[[",number_list,"]]$dataset'") 
-            stop(title)
-          }
-          
-          ## reorder newdata to match original data set
-          newdata <- dplyr::select(newdata, !!colnames(x[[number_list]]$dataset))
-          
-          ## check variables match
-          if(!identical(
-            summarise(newdata, across(everything(), class)),
-            summarise(x[[number_list]]$dataset, across(everything(), class))
-          )) {
-            title <- paste0("'newdata' and 'x[[",i,"]]$dataset' have different column classes")
-            stop(title)
-          }
-          
-          ## samples
-          
-          number_samples <- nrow(x[[number_list]]$samples)
-          if (number_samples <= nburn) stop("number of samples must be bigger than nburn")
-          samples <- rbind(samples, x[[number_list]]$samples[(nburn+1):number_samples,])
-          
-          
-        } else {
-          
-          if (min(ceiling(iterations)) < 1 || max(ceiling(iterations)) > max(nrow(x[[number_list]]$samples))) stop("number of iterations does not match mcmc samples")
-         
-          samples <- rbind(samples, x[[number_list]]$samples[iterations,])
-          
+      if (x$mcmc_chains == 1) {
+        if (min(ceiling(iterations)) < 1 || max(ceiling(iterations)) > max(nrow(x$samples))) stop("number of iterations does not match mcmc samples")
+      } else {
+        if (min(ceiling(iterations)) < 1 || max(ceiling(iterations)) > max(nrow(x$samples[[1]]))) stop("number of iterations does not match mcmc samples")
+      }
+      
+      if (x$mcmc_chains == 1) {
+        samples <- x$samples[ceiling(iterations),]
+      } else {
+        samples <- x$samples
+        for (i in 1:x$mcmc_chains) {
+          samples$samples[[i]] <- samples$samples[[i]][ceiling(iterations),]
         }
-        
-        
-        
-        
       }
+      # class(samples) <- c("tbl_df", "tbl", "data.frame")
       
-      if (!missing(nburn)) {
-        if (nrow(newdata) > nrow(samples)) stop("not enough samples to compare against the dataset")
-        
-        samples <- samples[ceiling(seq(1, nrow(samples), length.out = nrow(newdata))),]
-      }
-      
-      samples <- as.data.frame(samples)
-      class(samples) <- c("tbl_df", "tbl", "data.frame")
-      object <- list(dataset = x[[1]]$dataset, L = x[[1]]$L, samples = samples, standardise = x[[1]]$standardise)
-      
-      
-      
+      object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise, mcmc_chains = x$mcmc_chains)
+       
     }
+      
     
     
     class(object) <- "ggpairs.fit"
@@ -146,13 +101,20 @@ plot.ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
     source("predict_dpmm_fit.R")
     
     if (!missing(nburn)) {
-      posteriors <- predict.dpmm_fit(object, samples = seq(1, nrow(object$samples), 1))
+      if (x$mcmc_chains == 1) {
+        posteriors <- predict.dpmm_fit(object, samples = seq(1, nrow(object$samples), 1))
+      } else {
+        posteriors <- predict.dpmm_fit(object, samples = seq(1, nrow(object$samples[[1]]), 1))
+      }
     } else {
       posteriors <-  predict.dpmm_fit(object, samples = seq(1, length(iterations), 1))
     }
     
     
     if (!missing(newdata)) {
+      
+      # sample the same number of values as the dataset we put into the function
+      posteriors[[1]] <- posteriors[[1]] %>% sample_n(nrow(newdata))
       
       if (ncol(discrete) != 0) {
         for (i in 1:ncol(discrete)) {
@@ -230,7 +192,7 @@ plot.ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
       combination <- posteriors_plot %>%
         mutate(Data = factor(Data))
       
-      combination %>% ggpairs()
+      # combination %>% ggpairs()
       
       
       my_dens_lower <- function(data, mapping, ...) {

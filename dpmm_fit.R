@@ -6,7 +6,7 @@ library(abind)
 
 
 ## function to create and run nimble model
-runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRUE) {
+runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, standardise = TRUE) {
   
   ## check inputs
   if(!is.numeric(L)) stop("'L' must be 'numeric'")
@@ -1327,20 +1327,26 @@ runModel <- function(dataset, mcmc_iterations = 2500 , L = 10, standardise = TRU
   cbuilt <- compileNimble(built)
   
   # run model
-  cbuilt$run(niter = mcmc_iterations, reset = TRUE)
+  run <- runMCMC(cbuilt,
+                 niter = mcmc_iterations,
+                 nburnin = 0,
+                 nchains = mcmc_chains,
+                 progressBar = TRUE,
+                 summary = FALSE,
+                 samplesAsCodaMCMC = TRUE,
+                 thin = 1)
   
   # collect samples
-  samples <- as.matrix(cbuilt$mvSamples) %>%
-    as_tibble()
+  samples <- run
   
   if (standardise == TRUE) {
     if (ncol(continuous) != 0) {
-      output <- list(dataset = dataset, L = L, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
+      output <- list(dataset = dataset, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
     } else {
-      output <- list(dataset = dataset, L = L, samples = samples, standardise = standardise)
+      output <- list(dataset = dataset, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
     }
   } else {  
-    output <- list(dataset = dataset, L = L, samples = samples, standardise = standardise)
+    output <- list(dataset = dataset, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
   }
   
   class(output) <- "dpmm_fit"

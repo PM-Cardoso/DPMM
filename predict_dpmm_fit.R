@@ -95,7 +95,17 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
   
   source("posterior_dpmm.R")
 
-  posterior <- posterior_dpmm(dataset_prediction, object$samples[samples,], seed = NULL, cont_vars = cont_vars, cat_vars = cat_vars)
+  # model estimations
+  samples_object <- object$samples
+  if (object$mcmc_chains == 1) {
+    samples_object <- samples_object[samples,]
+  } else {
+    for (mcmc_chains_iter in 1:length(samples_object)) {
+      samples_object[[mcmc_chains_iter]] <- samples_object[[mcmc_chains_iter]][samples,]
+    }
+  }
+  
+  posterior <- posterior_dpmm(dataset_prediction, samples_object, seed = NULL, cont_vars = cont_vars, cat_vars = cat_vars, mcmc_chain = object$mcmc_chains)
   
   
   return(posterior)

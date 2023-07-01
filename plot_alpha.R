@@ -6,13 +6,14 @@ library(cowplot)
 plot.alpha <- function(x, nburn, thinning, ...) {
   
   if(missing(x)) stop("'x' needs to be supplied")
-  if (class(x) != "dpmm_fit") {
-    if (is.list(x) == TRUE) {
-      if (class(x[[1]]) != "dpmm_fit") stop("'x' needs to be of class 'dpmm_fit' or a list of 'dpmm_fit'")
-    } else {
-      stop("'x' needs to be of class 'dpmm_fit' or a list of 'dpmm_fit'")
-    }
-  }
+  if (class(x) != "dpmm_fit") stop("'x' needs to be of class 'dpmm_fit'")
+    
+  #   if (is.list(x) == TRUE) {
+  #     if (class(x[[1]]) != "dpmm_fit") stop("'x' needs to be of class 'dpmm_fit' or a list of 'dpmm_fit'")
+  #   } else {
+  #     stop("'x' needs to be of class 'dpmm_fit' or a list of 'dpmm_fit'")
+  #   }
+  # }
   
   if(missing(nburn)) stop("'nburn' must be provided")
   if(!missing(nburn)) {
@@ -28,26 +29,32 @@ plot.alpha <- function(x, nburn, thinning, ...) {
     }
   }
   
-  
   summary.clusters_complete <- NULL
   postComp_complete <- NULL
   postAlpha_complete <- NULL
   
-  
-  if (class(x) == "dpmm_fit") {
+  ## iterate through the chains
+  for (chain in 1:x$mcmc_chains) {
+      
+    if (x$mcmc_chains == 1) {
+      samples <- x$samples %>%
+        as_tibble()
+    } else {
+      samples <- x$samples[[chain]] %>%
+        as_tibble()
+    }
+      
+    iterations <- seq(nburn,nrow(samples), thinning)
     
-    
-    samples <- x$samples
-    
-    iterations <- seq(nburn,nrow(samples),1000)
     samples_summary <- samples %>%
-      select(starts_with("z"))
+    select(starts_with("z"))
+    
     summary.clusters <- NULL
     for (i in iterations) {
       row_summary <- samples_summary[i,] %>% t() %>% factor() %>% summary()
       summary.clusters <- dplyr::bind_rows(summary.clusters, row_summary)
     }
-    title_chain <- paste0("Chain 1")
+    title_chain <- paste0("Chain ",chain)
     summary.clusters <- summary.clusters %>%
       apply(1, function(x) x[order(x, decreasing = TRUE)]) %>%
       t() %>%
@@ -81,62 +88,8 @@ plot.alpha <- function(x, nburn, thinning, ...) {
     
     postAlpha_complete <- rbind(postAlpha_complete, postAlpha)
     
-    
-  } else {
-    
-    
-    for (chain in 1:length(x)) { 
       
-      samples <- x[[chain]]$samples
-      
-      iterations <- seq(nburn,nrow(samples),1000)
-      samples_summary <- samples %>%
-        select(starts_with("z"))
-      summary.clusters <- NULL
-      for (i in iterations) {
-        row_summary <- samples_summary[i,] %>% t() %>% factor() %>% summary()
-        summary.clusters <- dplyr::bind_rows(summary.clusters, row_summary)
-      }
-      title_chain <- paste0("Chain ",chain)
-      summary.clusters <- summary.clusters %>%
-        apply(1, function(x) x[order(x, decreasing = TRUE)]) %>%
-        t() %>%
-        as.data.frame() %>%
-        mutate_all(~replace(., is.na(.), 0)) %>%
-        colMeans() %>%
-        as.data.frame() %>%
-        setNames(c("value"))
-      
-      summary.clusters <- summary.clusters %>%
-        mutate(key = rep(as.character(1:nrow(summary.clusters)),1)) %>%
-        mutate(key = factor(key, levels = as.character(1:nrow(summary.clusters)))) %>%
-        cbind(Chain = rep(title_chain, nrow(summary.clusters)))
-      
-      summary.clusters_complete <- rbind(summary.clusters_complete, summary.clusters) 
-      
-      
-      postComp <- samples %>% 
-        select(starts_with("z")) %>%
-        apply(1, function(x)  length(unique(x))) %>%
-        as.data.frame() %>%
-        cbind(Iteration = rep(1:nrow(samples), 1)) %>%
-        cbind(Chain = rep(title_chain, nrow(samples)))
-      
-      postComp_complete <- rbind(postComp_complete, postComp)
-      
-      postAlpha <- samples %>%
-        select("alpha") %>%
-        mutate(Iteration = rep(1:nrow(samples), 1)) %>%
-        cbind(Chain = rep(title_chain, nrow(samples)))
-      
-      postAlpha_complete <- rbind(postAlpha_complete, postAlpha)
-      
-      
-    }
-    
   }
-  
-  
   
   summary.clusters_complete <- summary.clusters_complete %>%
     mutate(Chain = factor(Chain))
@@ -155,7 +108,7 @@ plot.alpha <- function(x, nburn, thinning, ...) {
       
       postComp_complete %>%
         ggplot() +
-        geom_path(aes(x = Iteration, y = `.`, colour = Chain), size = 0.4, alpha = 0.7) +
+        geom_path(aes(x = Iteration, y = `.`, colour = Chain), linewidth = 0.4, alpha = 0.7) +
         theme_bw() +
         scale_y_continuous(breaks = seq(1,200, by =1)) +
         labs(title = "Number of Components",

@@ -19,7 +19,7 @@ source("plot_alpha.R")
 dataset <- readRDS("datasets/dataset_test1.rds")
 
 ### standardise data
-posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, standardise = TRUE)
+posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, mcmc_chains = 2, standardise = TRUE)
 
 # Dataset 1 has two clusters of values
 # We introduce missingness in covariate X1 for a specific cluster.
@@ -69,7 +69,7 @@ plot.ggpairs(posteriors, dataset, nburn = 1500)
 ################
 ##### Here is the same analysis but without standardising continuous values
 
-posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, standardise = FALSE)
+posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, mcmc_chains = 2, standardise = FALSE)
 
 
 # Dataset 1 has two clusters of values
@@ -128,18 +128,25 @@ dataset_missing[1,1] <- NA
 dataset_missing[501,1] <- NA
 
 # Run the DPMM model with incomplete data
-posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardise = TRUE)
+posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, mcmc_chains = 2, standardise = TRUE)
 
 # Plot predicted values vs observed values
 # Note: Dataset 1 contains two separate clusters 
 #   with little explanation of structure within cluster,
 #   therefore we only expect predictions within the correct cluster
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[1, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist())) +
+  geom_vline(aes(xintercept = (dataset[1,1]-posteriors$mean_values[1])/posteriors$sd_values[1]))
+ggplot() +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain2)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = (dataset[1,1]-posteriors$mean_values[1])/posteriors$sd_values[1]))
 
+
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[2, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[2, 1]`)%>%slice(1000:2500)%>%unlist())) +
+  geom_vline(aes(xintercept = (dataset[501,1]-posteriors$mean_values[1])/posteriors$sd_values[1]))
+ggplot() +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain2)%>%select(`x_cont_miss[2, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = (dataset[501,1]-posteriors$mean_values[1])/posteriors$sd_values[1]))
 
 ################
@@ -153,13 +160,18 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 #   with little explanation of structure within cluster,
 #   therefore we only expect predictions within the correct cluster
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[1, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist())) +
+  geom_vline(aes(xintercept = dataset[1,1]))
+ggplot() +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain2)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[1,1]))
 
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[2, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[2, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[501,1]))
-
+ggplot() +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain2)%>%select(`x_cont_miss[2, 1]`)%>%slice(1000:2500)%>%unlist())) +
+  geom_vline(aes(xintercept = dataset[501,1]))
 
 
 ################################################################################
@@ -175,7 +187,7 @@ ggplot() +
 # load dataset
 dataset <- readRDS("datasets/dataset_test2.rds")
 
-posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, standardise = FALSE)
+posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, mcmc_chains = 2, standardise = FALSE)
 
 # Dataset 2 has two clusters of values
 # We introduce missingness in covariate X2 for a specific cluster.
@@ -226,7 +238,7 @@ dataset_missing <- dataset_missing[rows,]
 dataset_missing[,3] <- factor(NA, levels = levels(posteriors$dataset[,3]))
 
 # making predictions
-posteriors.dpmmfit <- predict.dpmm_fit(posteriors, dataset_missing, samples = seq(1500,2500, 25))
+posteriors.dpmmfit <- predict.dpmm_fit(posteriors, dataset_missing, samples = seq(1500,2500, 50))
 
 # collect credible intervals for predictions
 predicted <- NULL
@@ -275,12 +287,13 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 # Note: Dataset 2 contains two separate clusters
 #   with the continuous values (X1, X2) perfectly explaining
 #   which cluster the individual is part of
-cbind(posteriors$samples$`x_disc_miss[1, 1]`[1000:2500], rep(as.numeric(dataset[2,3]), 1501)) %>%
+
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[1, 1]`)%>%slice(1000:2500)%>%unlist(), rep(as.numeric(dataset[2,3]), 1501)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
 
-cbind(posteriors$samples$`x_disc_miss[2, 1]`[1000:2500], rep(as.numeric(dataset[501,3]), 1501)) %>%
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[2, 1]`)%>%slice(1000:2500)%>%unlist(), rep(as.numeric(dataset[501,3]), 1501)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
@@ -304,11 +317,11 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 #   with little explanation of structure within cluster,
 #   therefore we only expect predictions within the correct cluster
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[1, 2]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 2]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[1,2]))
 
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[2, 2]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[2, 2]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[501,2]))
 
 ##########
@@ -329,9 +342,11 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 #   with X3 providing enough information regarding the correct cluster
 #   but not enough information for the structure within the cluster
 ggplot() +
-  geom_point(aes(x = posteriors$samples$`x_cont_miss[1, 1]`[1000:2500], y = posteriors$samples$`x_cont_miss[1, 2]`[1000:2500]), colour = "darkorange") +
+  geom_point(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist(), 
+                 y = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 2]`)%>%slice(1000:2500)%>%unlist()), colour = "darkorange") +
   geom_point(aes(x = dataset[1,1], y = dataset[1,2]), colour = "darkorange3", fill = "black", size = 3) +
-  geom_point(aes(x = posteriors$samples$`x_cont_miss[2, 1]`[1000:2500], y = posteriors$samples$`x_cont_miss[2, 2]`[1000:2500]), colour = "royalblue") +
+  geom_point(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[2, 1]`)%>%slice(1000:2500)%>%unlist(), 
+                 y = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[2, 2]`)%>%slice(1000:2500)%>%unlist()), colour = "royalblue") +
   geom_point(aes(x = dataset[501,1], y = dataset[501,2]), colour = "royalblue4", size = 3)
 
 
@@ -348,7 +363,7 @@ ggplot() +
 # load dataset
 dataset <- readRDS("datasets/dataset_test3.rds")
 
-posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, standardise = FALSE)
+posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 6, mcmc_chains = 2, standardise = FALSE)
 
 # Dataset 3 has two clusters of values
 # We introduce missingness in covariate X1 for a specific cluster.
@@ -407,17 +422,15 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 # Table predicted values vs observed values
 # Note: Dataset 3 contains two separate clusters
 #   with X2 perfectly explaining X1
-cbind(posteriors$samples$`x_disc_miss[1, 1]`[1000:2500], dataset[1,1]) %>%
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[1, 1]`)%>%slice(1000:2500)%>%unlist(), dataset[1,1]) %>%
   as.data.frame() %>%
   set_names(c("Prediction","True Value")) %>%
   table()
 
-cbind(posteriors$samples$`x_disc_miss[2, 1]`[1000:2500], dataset[501,1]) %>%
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[2, 1]`)%>%slice(1000:2500)%>%unlist(), dataset[501,1]) %>%
   as.data.frame() %>%
   set_names(c("Prediction","True Value")) %>%
   table()
-
-
 
 ################################################################################
 ############################### Dataset 4 ######################################
@@ -510,17 +523,17 @@ dataset_missing <- dataset
 dataset_missing[1,1] <- NA
 dataset_missing[2,3] <- NA
 
-# Run the DPMM model with incomplete data
-posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardise = FALSE)
+# Run the DPMM model with incomplete data PROBLEM?
+posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, mcmc_chains = 2, standardise = FALSE)
 
 # Plot predicted values vs observed values
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[1, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[1,1]))
 
 # Table predicted values vs observed values
 # Note: Variable X3 is well explained by X4
-cbind(posteriors$samples$`x_disc_miss[2, 1]`[1000:2500], rep(dataset[2,3], rep = 1500)) %>%
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[2, 1]`)%>%slice(1000:2500)%>%unlist(), rep(dataset[2,3], rep = 1500)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
@@ -543,11 +556,11 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 # Plot predicted values vs observed values
 # Note: we expect only one cluster represented
 ggplot() +
-  geom_point(aes(x = posteriors$samples$`x_cont_miss[1, 1]`[1000:2500], y = posteriors$samples$`x_cont_miss[1, 2]`[1000:2500]))
+  geom_point(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist(), y = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 2]`)%>%slice(1000:2500)%>%unlist()))
 
 # Table predicted values vs observed values
 # Note: Variable X3 is well explained by X4
-cbind(posteriors$samples$`x_disc_miss[1, 1]`[1000:2500], rep(dataset[1,3], rep = 1500)) %>%
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[1, 1]`)%>%slice(1000:2500)%>%unlist(), rep(dataset[1,3], rep = 1500)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
@@ -572,14 +585,16 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 
 # Table predicted values vs observed values
 # Note: Variable X3 is well explained by X2
-cbind(posteriors$samples$`x_disc_miss[1, 1]`[1000:2500], rep(dataset[1,3], rep = 1500)) %>%
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[1, 1]`)%>%slice(1000:2500)%>%unlist(), rep(dataset[1,3], rep = 1500)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
 
+
+
 # Table predicted values vs observed values
 # Note: Variable X4 is well explained by X2 but should have two categories
-cbind(posteriors$samples$`x_disc_miss[1, 2]`[1000:2500], rep(dataset[1,4], rep = 1500)) %>%
+cbind(as_tibble(posteriors$samples$chain1)%>%select(`x_disc_miss[1, 2]`)%>%slice(1000:2500)%>%unlist(), rep(dataset[1,4], rep = 1500)) %>%
   as.data.frame() %>%
   set_names(c("Predicted","True")) %>%
   table()
@@ -587,7 +602,7 @@ cbind(posteriors$samples$`x_disc_miss[1, 2]`[1000:2500], rep(dataset[1,4], rep =
 # Plot predicted values vs observed values
 # Note: we expect only one cluster represented
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[1, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[1,1]))
 
 
@@ -604,7 +619,7 @@ ggplot() +
 # load dataset
 dataset <- readRDS("datasets/dataset_test6.rds")
 
-posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 12, standardise = FALSE)
+posteriors <- runModel(dataset, mcmc_iterations = 2500, L = 12, mcmc_chains = 2, standardise = FALSE)
 
 # Dataset 6 has specific clusters of data
 # We introduce missingness in covariate X1 and
@@ -662,12 +677,13 @@ posteriors <- runModel(dataset_missing, mcmc_iterations = 2500, L = 6, standardi
 # Note: Dataset 6 has specific clusters of data
 #   and X1 is well explained by X2
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[1, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[1, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[1,1]))
 
 ggplot() +
-  geom_density(aes(x = posteriors$samples$`x_cont_miss[2, 1]`[1000:2500])) +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%select(`x_cont_miss[2, 1]`)%>%slice(1000:2500)%>%unlist())) +
   geom_vline(aes(xintercept = dataset[501,1]))
+
 
 
 
@@ -679,24 +695,19 @@ ggplot() +
 dataset <- readRDS("datasets/dataset_test4.rds")
 
 # Run DPMM model
-posteriors.1 <- runModel(dataset, mcmc_iterations = 2500,  L = 12, standardise = FALSE)
+posteriors <- runModel(dataset, mcmc_iterations = 2500,  L = 12, mcmc_chains = 1, standardise = TRUE)
 
 # Plot of: 
 #   - number of components used
 #   - average number of individuals in ranked components
 #   - trace plot for alpha values
-plot.alpha(posteriors.1, nburn = 1500, thinning = 1000)
+plot.alpha(posteriors, nburn = 1500, thinning = 1000)
 
-# Run multiple DPMM models
-posteriors.2 <- runModel(dataset, mcmc_iterations = 2500,  L = 12, standardise = FALSE)
-
-posteriors.3 <- runModel(dataset, mcmc_iterations = 2500,  L = 12, standardise = FALSE)
-
-# Combine all DPMM models into a single list
-posteriors <- list(posteriors.1, posteriors.2, posteriors.3)
+# Run DPMM models with multiple chains
+posteriors <- runModel(dataset, mcmc_iterations = 10000,  L = 12, mcmc_chains = 2, standardise = TRUE)
 
 # Plots values
-plot.alpha(posteriors, nburn = 1500, thinning = 1000)
+plot.alpha(posteriors, nburn = 7000, thinning = 10)
 
 # We can draw random samples from the DPMM in order to understand
 #   the distribution of values. When using a list of Model posteriors
