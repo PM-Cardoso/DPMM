@@ -1406,12 +1406,12 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
   
   if (standardise == TRUE) {
     if (ncol(continuous) != 0) {
-      output <- list(dataset = synthpop::syn(dataset, k = 1)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
+      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
     } else {
-      output <- list(dataset = synthpop::syn(dataset, k = 1)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
+      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
     }
   } else {  
-    output <- list(dataset = synthpop::syn(dataset, k = 1)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
+    output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
   }
   
   class(output) <- "dpmm_fit"
