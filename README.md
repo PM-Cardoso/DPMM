@@ -19,7 +19,7 @@ Fitting the model is done with `dpmm_fit.R`. This file includes the function _ru
   - mcmc_iterations: number of iterations of the MCMC algorithm
   - L: maximum number of components to fit the model (should be below optimal number of components)
   - standardise: logical (default = TRUE), standardises all continuous variables
-Returns a list of class _dpmm_fit_ with all the information provided and standardisation terms.
+Returns a list of class _dpmm_fit_ with all the information provided (dataset is a synthetic version of the real dataset) and standardisation terms.
 
 `conditional_RW.R` and `conditional_RW_block.R` provide conditional gaussian updates for missing continuous variables.
 
