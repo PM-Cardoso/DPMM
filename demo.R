@@ -4,6 +4,8 @@ source("dpmm_fit.R")
 source("posterior_dpmm.R")
 source("plot_ggpairs.R")
 source("plot_alpha.R")
+source("conditional_RW_block.R")
+source("conditional_RW.R")
 
 ################################################################################
 ############################### Dataset 1 ######################################
