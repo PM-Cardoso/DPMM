@@ -251,12 +251,24 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           inits
         }
         
-        model <- nimbleModel(
-          code = code,
-          constants = consts,
-          data = data,
-          inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss, data$x_disc_miss)
-        )
+        
+        # adding this so that the logProb isn't -Inf
+        logProb = "-Inf"
+        
+        while (logProb == "-Inf") {
+          
+          model <- nimbleModel(
+            code = code,
+            constants = consts,
+            data = data,
+            inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss, data$x_disc_miss)
+          )
+          
+          logProb = model$calculate()
+          
+        }
+        
+        
         
         #compile the model
         cmodel <- compileNimble(model)
@@ -456,12 +468,22 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             inits
           }
           
-          model <- nimbleModel(
-            code = code,
-            constants = consts,
-            data = data,
-            inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss)
-          )
+          
+          # adding this so that the logProb isn't -Inf
+          logProb = "-Inf"
+          
+          while (logProb == "-Inf") {
+            
+            model <- nimbleModel(
+              code = code,
+              constants = consts,
+              data = data,
+              inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss)
+            )
+            
+            logProb = model$calculate()
+            
+          }
           
           #compile the model
           cmodel <- compileNimble(model)
@@ -664,12 +686,22 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             inits
           }
           
-          model <- nimbleModel(
-            code = code,
-            constants = consts,
-            data = data,
-            inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_disc_miss)
-          )
+          
+          # adding this so that the logProb isn't -Inf
+          logProb = "-Inf"
+          
+          while (logProb == "-Inf") {
+            
+            model <- nimbleModel(
+              code = code,
+              constants = consts,
+              data = data,
+              inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_disc_miss)
+            )
+            
+            logProb = model$calculate()
+            
+          }
           
           #compile the model
           cmodel <- compileNimble(model)
@@ -797,12 +829,21 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         inits
       }
       
-      model <- nimbleModel(
-        code = code,
-        constants = consts,
-        data = data,
-        inits = initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim)
-      )
+      # adding this so that the logProb isn't -Inf
+      logProb = "-Inf"
+      
+      while (logProb == "-Inf") {
+        
+        model <- nimbleModel(
+          code = code,
+          constants = consts,
+          data = data,
+          inits = initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim)
+        )
+        
+        logProb = model$calculate()
+        
+      }
       
       #compile the model
       cmodel <- compileNimble(model)
@@ -925,12 +966,22 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         }
         
         
-        model <- nimbleModel(
-          code = code,
-          constants = consts,
-          data = data,
-          inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, data$x_cont_miss)
-        )
+        # adding this so that the logProb isn't -Inf
+        logProb = "-Inf"
+        
+        while (logProb == "-Inf") {
+          
+          model <- nimbleModel(
+            code = code,
+            constants = consts,
+            data = data,
+            inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, data$x_cont_miss)
+          )
+          
+          logProb = model$calculate()
+          
+        }
+        
         
         
         #compile the model
@@ -1047,12 +1098,21 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         }
         
         
-        model <- nimbleModel(
-          code = code,
-          constants = consts,
-          data = data,
-          inits = initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0)
-        )
+        # adding this so that the logProb isn't -Inf
+        logProb = "-Inf"
+        
+        while (logProb == "-Inf") {
+          
+          model <- nimbleModel(
+            code = code,
+            constants = consts,
+            data = data,
+            inits = initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0)
+          )
+          
+          logProb = model$calculate()
+          
+        }
         
         
         #compile the model
@@ -1187,12 +1247,21 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           inits
         }
         
-        model <- nimbleModel(
-          code = code,
-          constants = consts,
-          data = data,
-          inits = initFn(consts$L, consts$N, consts$Nmiss, consts$ndiscdim, data$x_disc_miss)
-        )
+        # adding this so that the logProb isn't -Inf
+        logProb = "-Inf"
+        
+        while (logProb == "-Inf") {
+          
+          model <- nimbleModel(
+            code = code,
+            constants = consts,
+            data = data,
+            inits = initFn(consts$L, consts$N, consts$Nmiss, consts$ndiscdim, data$x_disc_miss)
+          )
+          
+          logProb = model$calculate()
+          
+        }
         
         #compile the model
         cmodel <- compileNimble(model)
@@ -1286,12 +1355,21 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           inits
         }
         
-        model <- nimbleModel(
-          code = code,
-          constants = consts,
-          data = data,
-          inits = initFn(consts$L, consts$N, consts$ndiscdim)
-        )
+        # adding this so that the logProb isn't -Inf
+        logProb = "-Inf"
+        
+        while (logProb == "-Inf") {
+          
+          model <- nimbleModel(
+            code = code,
+            constants = consts,
+            data = data,
+            inits = initFn(consts$L, consts$N, consts$ndiscdim)
+          )
+          
+          logProb = model$calculate()
+          
+        }
         
         
         #compile the model
