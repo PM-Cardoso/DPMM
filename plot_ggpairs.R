@@ -97,9 +97,6 @@ plot.ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
     class(object) <- "ggpairs.fit"
     
     
-    
-    source("predict_dpmm_fit.R")
-    
     if (!missing(nburn)) {
       if (x$mcmc_chains == 1) {
         posteriors <- predict.dpmm_fit(object, samples = seq(1, nrow(object$samples), 1))

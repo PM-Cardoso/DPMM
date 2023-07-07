@@ -92,9 +92,6 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
     
   }
   
-  
-  source("posterior_dpmm.R")
-
   # model estimations
   samples_object <- object$samples
   if (object$mcmc_chains == 1) {

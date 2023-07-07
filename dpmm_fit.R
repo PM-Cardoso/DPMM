@@ -264,11 +264,6 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         #set monitors
         config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "x_disc_miss"), thin = 1, print = FALSE)
         
-        
-        source("conditional_RW.R")
-        source("conditional_RW_block.R")
-        
-        
         ## add custom sampler
         for(i in 1:nrow(data$x_cont_miss)) {
           
@@ -473,10 +468,6 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           
           #set monitors
           config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss"), thin = 1, print = FALSE)
-          
-          
-          source("conditional_RW.R")
-          source("conditional_RW_block.R")
           
           
           ## add custom sampler
@@ -840,11 +831,6 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
       
       if (nrow(continuous_incomplete) != 0) {
         # if some missing values
-        
-        # load library
-        source("conditional_RW.R")
-        source("conditional_RW_block.R")
-        
         
         consts <- list(
           N = nrow(continuous_complete),
