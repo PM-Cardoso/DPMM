@@ -4,10 +4,10 @@
 log_sum_exp <- function(lx) {
   
   ## extract maximum of logged values
-  mX <- max(lx)
+  mX <- max(lx, na.rm = TRUE)
   
   ## return answer
-  out <- mX + log(sum(exp(lx - mX)))
+  out <- mX + log(sum(exp(lx[!is.na(lx)] - mX)))
   out
 }
 
@@ -319,6 +319,8 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         #   cont and cat
         preds <- post %>%
           mutate(w = pmap(list(w, muL, tauL, phiL, patient), function(w, mu, tau, phi, patient) {
+            
+            
             # which cont vars to marginalize 
             continuous_patient <- patient[1:length(cont_vars)]
             continuous_vars_given <- which(!is.na(continuous_patient))
@@ -336,11 +338,15 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
               marg_sigma <- tau[continuous_vars_given, continuous_vars_given, , drop = FALSE]
               
               lmarg <- map_dbl(1:length(w), function(i, xcont, xcat, mu, sigma, phi) {
-                # calculate the density for continuous
-                value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i])
-                # calculate the density for categorical
-                for (l in 1:length(categorical_vars)) {
-                  value <- value + log(phi[l ,xcat[categorical_vars[l]] , i])
+                if (!isSymmetric(solve(sigma[, , i]))) {
+                  value = as.numeric(NA)
+                } else {
+                  # calculate the density for continuous
+                  value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i])
+                  # calculate the density for categorical
+                  for (l in 1:length(categorical_vars)) {
+                    value <- value + log(phi[l ,xcat[categorical_vars[l]] , i])
+                  }
                 }
                 value
                 
@@ -348,16 +354,23 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
               lmarg <- log_sum_exp(lmarg)
               
               z_given_x_l <- map_dbl(1:length(w), function(i, xcont, xcat, mu, sigma, phi, denom) {
-                # calculate the density for continuous
-                value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i]) - denom
-                # calculate the density for categorical
-                for (l in 1:length(categorical_vars)) {
-                  value <- value + log(phi[l ,xcat[categorical_vars[l]] , i])
+                if (!isSymmetric(solve(sigma[, , i]))) {
+                  value = NA
+                } else {
+                  # calculate the density for continuous
+                  value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i]) - denom
+                  # calculate the density for categorical
+                  for (l in 1:length(categorical_vars)) {
+                    value <- value + log(phi[l ,xcat[categorical_vars[l]] , i])
+                  }
                 }
+                
                 value
               }, xcont = patient[continuous_vars_given], xcat = patient[(length(cont_vars)+1):(length(cont_vars)+length(cat_vars))], mu = marg_mean, sigma = marg_sigma, phi = phi, denom = lmarg)
               
               z_given_x <- exp(z_given_x_l)
+              
+              z_given_x[is.na(z_given_x)] <- 0
               
               # draw cluster from adjusted probs
               draw <- which.max(rmultinom(n = 1, size = 1, prob = z_given_x))
@@ -442,6 +455,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             psi[,,w]
           })) %>%
           mutate(value = pmap(list(patient, muL, tauL, phiL), function(patient, mu, tau, phi) {
+            
             # which cont vars to marginalize 
             continuous_patient <- patient[1:length(cont_vars)]
             continuous_vars_given <- which(!is.na(continuous_patient))
@@ -462,7 +476,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             
             if (!is_empty(categorical_vars)) {
               for (i in 1:length(categorical_vars)) {
-                if (length(categorical_vars) == 1) {
+                if (length(cat_vars) == 1) {
                   preds <- preds %>%
                     cbind(rcat(1,phi))
                 } else {
