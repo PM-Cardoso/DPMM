@@ -511,6 +511,20 @@ plot.ggpairs(posteriors, iterations = seq(1500,2500,1))
 plot.ggpairs(posteriors, dataset, nburn = 1500)
 
 
+## add missing data to one categorical variable
+rows <- 4
+dataset_missing <- dataset
+dataset_missing <- dataset_missing[rows,]
+dataset_missing[,5] <- factor(NA, levels = levels(posteriors$dataset[,1]))
+
+# making predictions
+posteriors.dpmmfit <- predict.dpmm_fit(posteriors, dataset_missing, samples = seq(1500,2500, 25))
+
+
+
+
+
+
 #########################################
 ##### Fitting the model in the presence of missing values
 #########################################
@@ -720,6 +734,35 @@ plot.ggpairs(posteriors, iterations = seq(2000,2500,1))
 #   When using a list of Model posteriors, 'nburn' corresponds to
 #   the initial samples removed from each Model posteriors
 plot.ggpairs(posteriors, dataset, nburn = 2000)
+
+
+
+### test
+
+source("predict_dpmm_fit.R")
+source("dpmm_fit.R")
+source("posterior_dpmm.R")
+source("plot_ggpairs.R")
+source("plot_alpha.R")
+source("conditional_RW_block.R")
+source("conditional_RW.R")
+
+# predictions for patients with missing data
+patient_missing <- united[1:6,]
+
+## add missingness
+for (i in 1:6) {
+  patient_missing[i,i] <- NA
+}
+
+## predict missing values
+posteriors.dpmmfit <- predict.dpmm_fit(posteriors, patient_missing, samples = seq(30000,40000, 100))
+
+
+
+
+
+
 
 
 
