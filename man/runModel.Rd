@@ -24,7 +24,7 @@ runModel(
 \item{standardise}{Should continuous variables be standardised. default = TRUE}
 }
 \value{
-\subsection{Output: List of class 'dpmm_fit'} {
+\subsection{Output: List of class 'dpmm_fit'}{
    \describe{
      \item{dataset}{dataframe with 1 row but defined the same way as the dataset fitted.}
      \item{L}{Number of DPMM components fitted.}

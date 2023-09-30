@@ -9,7 +9,7 @@
 #' @param standardise Should continuous variables be standardised. default = TRUE
 #'
 #' @return
-#' \subsection{Output: List of class 'dpmm_fit'} {
+#' \subsection{Output: List of class 'dpmm_fit'}{
 #'    \describe{
 #'      \item{dataset}{dataframe with 1 row but defined the same way as the dataset fitted.}
 #'      \item{L}{Number of DPMM components fitted.}
@@ -47,18 +47,23 @@
 #'
 #' @export
 runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, standardise = TRUE) {
-
+  
+  #:-------------------------------------------------------------------
   ## check inputs
   if(!is.numeric(L)) stop("'L' must be 'numeric'")
   if(L < 3) stop("'L' has to be 3 or more")
   if(!is.data.frame(dataset)) stop("'dataset' must be 'data.frame'")
   if(!is.numeric(mcmc_iterations)) stop("'mcmc_iterations' must be 'numeric'")
-  if(!is.numeric(L)) stop("'L' must be 'numeric'")
   if(!is.logical(standardise)) stop("'standardise' must be 'logical'")
 
+  #:-------------------------------------------------------------------
+  ## check which columns are continuous or categorical
   continuous <- dplyr::select(dataset, where(is.numeric))
   discrete <- dplyr::select(dataset, where(Negate(is.numeric)))
   dataset <- cbind(continuous, discrete)
+  
+  #:-------------------------------------------------------------------
+  ## check if columns should be standardised
   if (standardise == TRUE) {
     if (ncol(continuous) != 0) {
       mean_values <- as.vector(continuous %>% colMeans(na.rm = TRUE)) %>%
@@ -73,6 +78,9 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         apply(2, function(x) (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE))
     }
   }
+  
+  #:-------------------------------------------------------------------
+  ## set up continuous and categorical variables
   if (ncol(continuous) != 0) {
     continuous <- as.matrix(continuous)
   }
@@ -83,15 +91,22 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
     discrete <- as.matrix(discrete)
   }
 
-
-
+  
+  #:-------------------------------------------------------------------
+  ## if the dataset includes both continuous and categorical variables
   if (ncol(continuous) > 0 & ncol(discrete) >0) {
-    # model for both discrete and continuous vars
+    
+    
+    #:-------------------------------------------------------------------
+    ## check which rows are complete and which have missingness
     rows_complete <- which(complete.cases(dataset))
     rows_incomplete <- which(!complete.cases(dataset))
 
     if (!is_empty(rows_incomplete)) {
-      # if there is missing values
+      
+      #:-------------------------------------------------------------------
+      ## If there are rows with incomplete data
+      
       if (length(rows_incomplete) == 1) {
         if (sum(!complete.cases(continuous[rows_incomplete,])) == 0) {
           rows_continuous_complete <- rows_incomplete
@@ -108,7 +123,6 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           rows_discrete_complete <- c()
         }
 
-
       } else {
 
         rows_continuous_complete <- which(complete.cases(continuous[rows_incomplete,]))
@@ -119,9 +133,11 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
       }
 
 
-
+      
+      #:-------------------------------------------------------------------
+      ## If there are rows with incomplete continuous and categorical predictors
+      
       if (!is_empty(rows_continuous_incomplete) & !is_empty(rows_discrete_incomplete)) {
-        # if there is missing values for continuous and discrete
 
         if (sum(length(rows_complete)) == 1) {
           discrete_complete <- discrete[-rows_incomplete,] %>%
@@ -339,10 +355,11 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           }
         }
 
-
+        
+        #:-------------------------------------------------------------------
+        ## If there are rows with incomplete continuous
       } else {
         if (!is_empty(rows_continuous_incomplete)) {
-          # if there is missing values for continuous
 
           if (sum(c(length(rows_complete),length(rows_continuous_complete))) == 1) {
             discrete_complete <- discrete[-rows_incomplete[rows_continuous_incomplete],] %>%
@@ -556,7 +573,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             }
           }
 
-
+          
+          #:-------------------------------------------------------------------
+          ## If there are rows with incomplete categorical predictors
+          
         } else {
           # if there is missing values for discrete
           tau0 <- apply(as.matrix(continuous), 2, range)
@@ -752,7 +772,9 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         }
       }
 
-
+      
+      #:-------------------------------------------------------------------
+      ## If there are only complete rows with continuous and categorical predictors
     } else {
 
       consts <- list(
@@ -893,9 +915,11 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
 
     }
 
-
-
   } else {
+    
+    #:-------------------------------------------------------------------
+    ## if the dataset includes only continuous
+    
     if (ncol(continuous) > 0) {
       # model for only continuous
       continuous_complete <- continuous[complete.cases(continuous),] %>%
@@ -909,6 +933,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           as.data.frame()
       }
 
+      
+      #:-------------------------------------------------------------------
+      ## If there are rows with incomplete continuous predictors
+      
       if (nrow(continuous_incomplete) != 0) {
         # if some missing values
 
@@ -1054,7 +1082,9 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           }
         }
 
-
+        
+        #:-------------------------------------------------------------------
+        ## If there are only complete rows of continuous predictors
       } else {
         # if no missing values
 
@@ -1162,6 +1192,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
 
       }
 
+      
+      #:-------------------------------------------------------------------
+      ## if the dataset includes only categorical
+      
     } else {
       # model for only categorical
       discrete_complete <- discrete[complete.cases(discrete),] %>%
@@ -1175,7 +1209,9 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           as.data.frame()
       }
 
-
+      
+      #:-------------------------------------------------------------------
+      ## If there are rows with incomplete categorical predictors
       if (nrow(discrete_incomplete) != 0) {
         # if some missing values
 
@@ -1308,7 +1344,9 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         #set monitors
         config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "x_disc_miss"), thin = 1, print = FALSE)
 
-
+        
+        #:-------------------------------------------------------------------
+        ## If there are only rows with complete categorical predictors
       } else {
 
         consts <- list(
@@ -1421,6 +1459,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
     }
 
   }
+  
   ## print config
   print(config)
 
@@ -1442,6 +1481,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
   # collect samples
   samples <- run
 
+  # create output
   if (standardise == TRUE) {
     if (ncol(continuous) != 0) {
       output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
@@ -1456,18 +1496,4 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
 
   return(output)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -18,8 +18,7 @@ Imports:
     stats,
     rlang,
     purrr,
-    dplyr,
-    Rcpp
+    dplyr
 Depends:
     nimble
 RoxygenNote: 7.2.3
