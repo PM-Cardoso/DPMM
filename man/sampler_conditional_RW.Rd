@@ -6,6 +6,15 @@
 \usage{
 sampler_conditional_RW(model, mvSaved, target, control)
 }
+\arguments{
+\item{model}{.}
+
+\item{mvSaved}{.}
+
+\item{target}{.}
+
+\item{control}{.}
+}
 \description{
 Nimble Sampler for a missing continuous predictor with other observed predictors.
 }

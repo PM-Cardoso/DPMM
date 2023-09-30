@@ -2,6 +2,10 @@
 #'
 #' Nimble Sampler for >1 missing continuous predictors with other observed predictors.
 #'
+#' @param model .
+#' @param mvSaved .
+#' @param target .
+#' @param control .
 #'
 #' @importFrom nimble nimbleFunction
 #' @import methods
