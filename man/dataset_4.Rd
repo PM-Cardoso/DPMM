@@ -5,7 +5,7 @@
 \alias{dataset_4}
 \title{Synthetic dataset 4}
 \format{
-## `dataset_4`
+`dataset_4`
 A data frame with 500 rows and 5 columns:
 \describe{
   \item{X1}{Continuous variable, mean = 8, sd = 3}

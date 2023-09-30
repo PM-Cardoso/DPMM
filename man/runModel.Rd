@@ -13,7 +13,7 @@ runModel(
 )
 }
 \arguments{
-\item{dataset}{Dataframe with continuous and/or categorical variables.}
+\item{dataset}{dataframe with continuous and/or categorical variables.}
 
 \item{mcmc_iterations}{Number of MCMC iterations.}
 
@@ -24,7 +24,17 @@ runModel(
 \item{standardise}{Should continuous variables be standardised. default = TRUE}
 }
 \value{
-A list.
+\subsection{Output: List of class 'dpmm_fit'} {
+   \describe{
+     \item{dataset}{dataframe with 1 row but defined the same way as the dataset fitted.}
+     \item{L}{Number of DPMM components fitted.}
+     \item{mcmc_chains}{Number of MCMC chains fitted.}
+     \item{samples}{MCMC samples.}
+     \item{standardise}{TRUE or FALSE whether values were standardised.}
+     \item{mean_values}{Mean values for covariates standardised.}
+     \item{sd_values}{SD values for covariates standardised.}
+   }
+}
 }
 \description{
 This function fits the Dirichlet Process Mixture Model (DPMM).
@@ -34,6 +44,10 @@ This function fits the Dirichlet Process Mixture Model (DPMM).
 data(dataset_1)
 
 ## fit model
-posteriors <- runModel(dataset_1, mcmc_iterations = 100, L = 6, mcmc_chains = 2, standardise = TRUE)
+posteriors <- runModel(dataset_1, 
+                       mcmc_iterations = 100,
+                       L = 6, 
+                       mcmc_chains = 2, 
+                       standardise = TRUE)
 
 }
