@@ -7,7 +7,6 @@
 #' @import methods
 #'
 #'
-#' @export
 sampler_conditional_RW <- nimbleFunction(
     name = 'sampler_conditional_RW',
     contains = sampler_BASE,

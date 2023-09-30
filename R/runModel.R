@@ -24,10 +24,10 @@
 #' @import dplyr
 #'
 #' @examples
-#' # load dataset
+#' ## load dataset
 #' data(dataset_1)
-#'
-#' ### fit model
+#' 
+#' ## fit model
 #' posteriors <- runModel(dataset_1, mcmc_iterations = 100, L = 6, mcmc_chains = 2, standardise = TRUE)
 #'
 #' @export

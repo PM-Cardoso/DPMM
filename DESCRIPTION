@@ -8,7 +8,6 @@ Description: This package fits a Dirichlet Process Mixture Model (DPMM) to compl
 License: GPL (>= 3)
 Encoding: UTF-8
 Imports: 
-    nimble,
     methods,
     MASS,
     abind,
@@ -19,5 +18,8 @@ Imports:
     stats,
     rlang,
     purrr,
-    dplyr
+    dplyr,
+    Rcpp
+Depends:
+    nimble
 RoxygenNote: 7.2.3
