@@ -15,14 +15,17 @@ Imports:
     synthpop,
     tidyselect,
     matrixStats,
-    stats,
     rlang,
     purrr,
     dplyr,
+    stats,
     coda,
     condMVNorm,
     mvtnorm,
-    tidyr
+    tidyr,
+    ggplot2,
+    GGally,
+    cowplot
 Depends:
     nimble
 RoxygenNote: 7.2.3
