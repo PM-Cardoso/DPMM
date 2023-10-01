@@ -18,7 +18,11 @@ Imports:
     stats,
     rlang,
     purrr,
-    dplyr
+    dplyr,
+    coda,
+    condMVNorm,
+    mvtnorm,
+    tidyr
 Depends:
     nimble
 RoxygenNote: 7.2.3
