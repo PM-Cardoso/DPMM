@@ -38,7 +38,7 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
   ## check object is correct class
   if(!inherits(object, "dpmm_fit") && !inherits(object, "ggpairs.fit")) stop("'object' must be a 'dpmm_fit' or 'ggpairs.fit' object")
   
-  ## if newdata is missing, then just generate random samples from posterior
+  ## if newdata is provided, check if the dataset is formatted the same was the dataset used during the DPMM fit.
   if(!missing(newdata)) {
     ## check newdata
     if(!is.data.frame(newdata)) stop("'newdata' must be a data.frame")
@@ -58,6 +58,9 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
   }
   
   if (!missing(newdata)) {
+    
+    #:----------------------------------------------------------
+    ## check which columns are continuous
     continuous <- dplyr::select(newdata, where(is.numeric))
     # need to standardise everything if object$standardise is present
     if (object$standardise == TRUE) {
@@ -65,7 +68,14 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
         continuous[,i] <- (continuous[,i]-object$mean_values[i])/object$sd_values[i]
       }
     }
+    
+    #:----------------------------------------------------------
+    ## check which columns are categorical
     discrete <- dplyr::select(newdata, where(Negate(is.numeric)))
+    
+    
+    #:----------------------------------------------------------
+    ## check the names of continuous and/or categorical variables
     if (ncol(continuous) != 0) {
       continuous <- continuous
       cont_vars <- colnames(continuous)
@@ -78,20 +88,30 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
     } else {
       cat_vars <- NULL
     }
+    
+    # for the dataframe for prediction
     dataset_prediction <- cbind(continuous, discrete)
     
     ## is there any na? if not, stop
     if (min(rowSums(is.na(dataset_prediction))) == 0) {
-      stop("'newdata' has entries with no missing values")
+      stop("'newdata' has rows with no missing values")
     }
-    ## see if any of newdata has all data
     
     
   } else {
-    ## extract continuous and discrete variables
+    #:---------------------------------------------------------------
+    ## if newdata is missing, then just generate random samples from posterior
+    
+    #:----------------------------------------------------------
+    ## check which columns are continuous
     continuous <- dplyr::select(object$dataset, where(is.numeric))
     
+    #:----------------------------------------------------------
+    ## check which columns are categorical
     discrete <- dplyr::select(object$dataset, where(Negate(is.numeric)))
+    
+    #:----------------------------------------------------------
+    ## check the names of continuous and/or categorical variables
     if (ncol(continuous) != 0) {
       continuous[] <- as.numeric(NA)
       cont_vars <- colnames(continuous)
@@ -112,11 +132,15 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
     if (ncol(discrete) != 0) {
       discrete <- discrete
     }
+    
+    #:----------------------------------------------------------
+    ## set up hypothetical row with all variables missing for random samples
     dataset_prediction <- cbind(continuous, discrete)[1,]
     
   }
   
-  # model estimations
+  #:----------------------------------------------------------
+  ## MCMC iterations to be used for sampling
   samples_object <- object$samples
   if (object$mcmc_chains == 1) {
     samples_object <- samples_object[samples,]
@@ -126,6 +150,8 @@ predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
     }
   }
   
+  #:----------------------------------------------------------
+  ## sample posterior predictive distributions for missing values
   posterior <- posterior_dpmm(dataset_prediction, samples_object, seed = NULL, cont_vars = cont_vars, cat_vars = cat_vars, mcmc_chain = object$mcmc_chains)
   
   return(posterior)
