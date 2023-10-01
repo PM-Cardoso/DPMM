@@ -34,6 +34,6 @@ posteriors <- runModel(dataset_1,
                
                               
 ## diagnostic plot
-plot.alpha(posteriors, nburn = 50, thinning = 1)
+plot_alpha(posteriors, nburn = 50, thinning = 1)
 
 }
