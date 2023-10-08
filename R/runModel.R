@@ -22,16 +22,24 @@
 #' }
 #'
 #' @importFrom magrittr %>%
+#' @importFrom stats complete.cases
+#' @importFrom stats cov
+#' @importFrom stats rWishart
+#' @importFrom stats rbeta
+#' @importFrom stats rexp
+#' @importFrom stats rgamma
+#' @importFrom stats rmultinom
+#' @importFrom stats sd
+#' @importFrom stats setNames
+#' @importFrom stats var
 #' @import nimble
-#' @importFrom nimble getNimbleOption
-#' @import MASS
 #' @import abind
 #' @import synthpop
 #' @importFrom tidyselect where
 #' @importFrom rlang is_empty
 #' @importFrom purrr map
-#' @import matrixStats
-#' @import stats
+#' @importFrom MASS mvrnorm
+#' @importFrom matrixStats colSds
 #' @import dplyr
 #'
 #' @examples
@@ -339,7 +347,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             config$removeSampler(target)
             config$addSampler(
               target = target,
-              type = 'conditional_RW',
+              type = 'sampler_conditional_RW',
               control = list(scale = 1, index = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE)
             )
           } else if (sum(is.na(data$x_cont_miss[i, ])) == ncol(continuous) || sum(is.na(data$x_cont_miss[i, ])) == 0) {
@@ -349,7 +357,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             config$removeSampler(target)
             config$addSampler(
               target = target,
-              type = 'conditional_RW_block',
+              type = 'sampler_conditional_RW_block',
               control = list(scale = 1, indices = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE)
             )
           }
@@ -557,7 +565,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               config$removeSampler(target)
               config$addSampler(
                 target = target,
-                type = 'conditional_RW',
+                type = 'sampler_conditional_RW',
                 control = list(scale = 1, index = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE)
               )
             } else if (sum(is.na(data$x_cont_miss[i, ])) == ncol(continuous) || sum(is.na(data$x_cont_miss[i, ])) == 0) {
@@ -567,7 +575,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               config$removeSampler(target)
               config$addSampler(
                 target = target,
-                type = 'conditional_RW_block',
+                type = 'sampler_conditional_RW_block',
                 control = list(scale = 1, indices = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE)
               )
             }
@@ -1066,7 +1074,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             config$removeSampler(target)
             config$addSampler(
               target = target,
-              type = 'conditional_RW',
+              type = 'sampler_conditional_RW',
               control = list(scale = 1, index = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE)
             )
           } else if (sum(is.na(data$x_cont_miss[i, ])) == ncol(continuous) || sum(is.na(data$x_cont_miss[i, ])) == 0) {
@@ -1076,7 +1084,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             config$removeSampler(target)
             config$addSampler(
               target = target,
-              type = 'conditional_RW_block',
+              type = 'sampler_conditional_RW_block',
               control = list(scale = 1, indices = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE)
             )
           }

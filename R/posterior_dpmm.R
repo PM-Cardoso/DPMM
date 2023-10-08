@@ -292,7 +292,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             density <- condMVNorm::condMVN(mu, solve(tau), dep = variables_dep, given = variables_given,
                                            X.given = patient[variables_given], check.sigma = FALSE)
             # draw for missing var
-            preds <- cbind(t(MASS::mvrnorm(1, density$condMean, density$condVar))) %>%
+            preds <- cbind(t(mvrnorm(1, density$condMean, density$condVar))) %>%
               as.data.frame()
             preds
           }))
@@ -502,7 +502,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
               density <- condMVNorm::condMVN(mu, solve(tau), dep = continuous_vars_dep, given = continuous_vars_given,
                                              X.given = patient[continuous_vars_given], check.sigma = FALSE)
               # draw for missing var
-              preds <- cbind(t(MASS::mvrnorm(1, density$condMean, density$condVar)))
+              preds <- cbind(t(mvrnorm(1, density$condMean, density$condVar)))
             }
             
             if (!is_empty(categorical_vars)) {

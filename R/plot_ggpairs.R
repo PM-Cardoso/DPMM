@@ -139,12 +139,12 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
   ## perform MCMC predictive draws
   if (!missing(nburn)) {
     if (x$mcmc_chains == 1) {
-      posteriors <- predict.dpmm_fit(object, samples = seq(1, nrow(object$samples), 1))
+      posteriors <- predict_dpmm_fit(object, samples = seq(1, nrow(object$samples), 1))
     } else {
-      posteriors <- predict.dpmm_fit(object, samples = seq(1, nrow(object$samples[[1]]), 1))
+      posteriors <- predict_dpmm_fit(object, samples = seq(1, nrow(object$samples[[1]]), 1))
     }
   } else {
-    posteriors <-  predict.dpmm_fit(object, samples = seq(1, length(iterations), 1))
+    posteriors <-  predict_dpmm_fit(object, samples = seq(1, length(iterations), 1))
   }
   
   

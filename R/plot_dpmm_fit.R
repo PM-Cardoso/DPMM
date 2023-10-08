@@ -25,7 +25,7 @@
 #' plot(posteriors)
 #'
 #' @export
-plot.dpmm_fit <- function(x, trace = TRUE, density = TRUE, ...) {
+plot_dpmm_fit <- function(x, trace = TRUE, density = TRUE, ...) {
   
   ## check inputs
   if(!inherits(x, "dpmm_fit")) stop("'x' must be a dpmm_fit object")

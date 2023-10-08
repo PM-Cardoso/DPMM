@@ -33,7 +33,7 @@
 #'                        
 #'
 #' @export
-predict.dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...) {
+predict_dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...) {
   
   ## check object is correct class
   if(!inherits(object, "dpmm_fit") && !inherits(object, "ggpairs.fit")) stop("'object' must be a 'dpmm_fit' or 'ggpairs.fit' object")

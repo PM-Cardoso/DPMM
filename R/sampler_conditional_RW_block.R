@@ -10,7 +10,7 @@
 #' @importFrom nimble nimbleFunction
 #' @import methods
 #'
-#'
+#' @export
 sampler_conditional_RW_block <- nimbleFunction(
     name = 'sampler_conditional_RW_block',
     contains = sampler_BASE,

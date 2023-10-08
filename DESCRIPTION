@@ -1,7 +1,7 @@
 Package: DPMM
 Type: Package
 Title: Dirichlet Process Mixture Model
-Version: 1.0.0
+Version: 1.0.1
 Author: Pedro Cardoso et al.
 Maintainer: <p.cardoso@exeter.ac.uk>
 Description: This package fits a Dirichlet Process Mixture Model (DPMM) to complete/incomplete datasets with continuous and categorical variables.
@@ -10,15 +10,15 @@ Encoding: UTF-8
 Imports: 
     methods,
     MASS,
+    matrixStats,
+    stats,
     abind,
     magrittr,
     synthpop,
     tidyselect,
-    matrixStats,
     rlang,
     purrr,
     dplyr,
-    stats,
     coda,
     condMVNorm,
     mvtnorm,
@@ -29,3 +29,7 @@ Imports:
 Depends:
     nimble
 RoxygenNote: 7.2.3
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
