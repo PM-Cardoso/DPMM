@@ -64,8 +64,10 @@ predict_dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
     continuous <- dplyr::select(newdata, where(is.numeric))
     # need to standardise everything if object$standardise is present
     if (object$standardise == TRUE) {
-      for (i in 1:(ncol(continuous))) {
-        continuous[,i] <- (continuous[,i]-object$mean_values[i])/object$sd_values[i]
+      if (ncol(continuous) != 0) {
+        for (i in 1:(ncol(continuous))) {
+          continuous[,i] <- (continuous[,i]-object$mean_values[i])/object$sd_values[i]
+        }
       }
     }
     

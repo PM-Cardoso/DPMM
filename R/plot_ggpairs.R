@@ -13,6 +13,7 @@
 #'
 #' @import GGally
 #' @importFrom dplyr filter
+#' @importFrom dplyr summarise
 #' @import ggplot2
 #'
 #' @examples
@@ -169,15 +170,20 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
     if (inherits(x, "dpmm_fit")) {
       if (x$standardise == TRUE) {
         continuous <- dplyr::select(x$dataset, where(is.numeric))
-        for (i in 1:ncol(continuous)) {
-          posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x$sd_values[i])+x$mean_values[i]
+        if (ncol(continuous) != 0) {
+          for (i in 1:ncol(continuous)) {
+            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x$sd_values[i])+x$mean_values[i]
+          }
         }
+        
       }
     } else {
       if (x[[1]]$standardise == TRUE) {
         continuous <- dplyr::select(x[[1]]$dataset, where(is.numeric))
-        for (i in 1:ncol(continuous)) {
-          posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x[[1]]$sd_values[i])+x[[1]]$mean_values[i]
+        if (ncol(continuous) != 0) {
+          for (i in 1:ncol(continuous)) {
+            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x[[1]]$sd_values[i])+x[[1]]$mean_values[i]
+          }
         }
       }
     }
@@ -233,15 +239,19 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
     if (inherits(x, "dpmm_fit")) {
       if (x$standardise == TRUE) {
         continuous <- dplyr::select(x$dataset, where(is.numeric))
-        for (i in 1:ncol(continuous)) {
-          posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x$sd_values[i])+x$mean_values[i]
+        if (ncol(continuous) != 0) {
+          for (i in 1:ncol(continuous)) {
+            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x$sd_values[i])+x$mean_values[i]
+          }
         }
       }
     } else {
       if (x[[1]]$standardise == TRUE) {
         continuous <- dplyr::select(x[[1]]$dataset, where(is.numeric))
-        for (i in 1:ncol(continuous)) {
-          posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x[[1]]$sd_values[i])+x[[1]]$mean_values[i]
+        if (ncol(continuous) != 0) {
+          for (i in 1:ncol(continuous)) {
+            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x[[1]]$sd_values[i])+x[[1]]$mean_values[i]
+          }
         }
       }
     }
