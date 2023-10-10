@@ -22,6 +22,7 @@ Plot
 This function plots trace plots of the DPMM estimated parameters.
 }
 \examples{
+\dontrun{
 ## load dataset
 data(dataset_1)
 
@@ -33,5 +34,7 @@ posteriors <- runModel(dataset_1,
                        standardise = TRUE)
 ## plot trace plots
 plot(posteriors)
+}
+
 
 }

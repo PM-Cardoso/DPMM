@@ -1,0 +1,185 @@
+---
+title: "DPMM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{DPMM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.dim=c(6,6),
+  comment = "#>"
+)
+```
+
+
+# Overview
+
+The goal of `DPMM` (Dirichlet process mixture model) is to fit a Dirichlet Process Mixture Model to a dataset with continuous and/or categorical predictors. The fitted model can be used for prediction of missing predictors.
+
+```{r}
+library(DPMM)
+```
+
+In here, we will discuss the functions and workflow of this package.
+
+## Dataset
+
+We start with discussing the dataset we will be using. Although several datasets are provided with the 'DPMM' package, we will be using Dataset 1. Dataset 1 is comprised of two distinct clusters, where the values of both predictor variables do not overlap each other. Therefore, one variable is informative of the other.
+
+```{r}
+data(dataset_1)
+
+GGally::ggpairs(dataset_1)
+```
+
+## Fitting the DPMM to complete data
+
+We can fit the DPMM to the complete dataset. The 'mcmc_iterations' represents how long the MCMC chain should run (longer is better), 'L' represents the number of clusters that should be fitted, 'mcmc_chain' represents the number of MCMC chains being fitted in this function and 'standardise' chooses whether the continuous values should be standardised.
+
+```{r}
+posteriors <- runModel(dataset_1, 
+                       mcmc_iterations = 20000, 
+                       L = 10, 
+                       mcmc_chains = 4, 
+                       standardise = TRUE)
+```
+
+### Check fitting diagnostics
+
+The 'DPMM' package provides several diagnostic tools. The function 'plot_alpha' takes the posterior samples from the fitted DPMM and explores whether it shows evidence of convergence (important for Bayesian inference). The plot is divided into three panels:
+
+- A: number of components used at each iteration of the fitted model.
+- B: average number of individuals in ranked components (after discarding burn-in 'nburn', every 'thinning' value).
+- C: trace plot of alpha values (governs number of components).
+
+
+```{r, fig.dim=c(10,6)}
+plot_alpha(posteriors, nburn = 10000, thinning = 1)
+```
+
+We can also check the fit of the DPMM to ensure that random samples from the fitted DPMM are in the same covariate space as the original data.
+
+```{r}
+plot_ggpairs(posteriors, 
+             newdata = dataset_1, 
+             nburn = 10000)
+```
+
+### Predictions of missing values
+
+We can introduce missingness in the dataset and check whether the DPMM is predicting values in the right cluster. In this case, we introduce missingness in 'X1' for some of the patients in one of the clusters.
+
+```{r}
+rows <- 1:50
+dataset_missing <- dataset_1
+dataset_missing_predict <- dataset_missing[rows,]
+dataset_missing_predict[,"X1"] <- as.numeric(NA)
+```
+
+And make predictions from the fitted DPMM.
+
+```{r}
+posteriors.prediction <- predict_dpmm_fit(posteriors, 
+                                          newdata = dataset_missing_predict,
+                                          samples = seq(10000,20000, 100))
+```
+
+We can then check whether the values are being predicted in the right place. First, we calculate the credible intervals for each predicted value.
+
+```{r}
+low_q <- NULL
+median_q <- NULL
+high_q <- NULL
+for (i in 1:length(posteriors.prediction)) {
+  low_q <- c(low_q, quantile(unlist(posteriors.prediction[[i]][]), probs = c(0.05)))
+  median_q <- c(median_q, quantile(unlist(posteriors.prediction[[i]][]), probs = c(0.5)))
+  high_q <- c(high_q, quantile(unlist(posteriors.prediction[[i]][]), probs = c(0.95)))
+}
+```
+
+We then standardise the original values to match the standardisation in the DPMM.
+
+```{r}
+standardised_values <- (dataset_missing[rows,"X1"]-posteriors$mean_values[1])/posteriors$sd_values[1]
+```
+
+Lastly, we plot the credible intervals against the true values.
+
+```{r}
+library(tidyverse)
+cbind(standardised_values,low_q, median_q,high_q) %>%
+  as.data.frame() %>%
+   rlang::set_names(c("observed", "low","median","high")) %>%
+  ggplot() +
+  geom_point(aes(x = observed, y = median)) +
+  geom_errorbar(aes(x = observed, ymin = low, ymax = high)) +
+  geom_abline(aes(intercept = 0, slope = 1))
+```
+
+
+## Fitting the DPMM to incomplete data
+
+We can also fit the DPMM with missing data present in the original dataset. Let's introduce some misisngness in both clusters.
+
+```{r}
+dataset_missing <- dataset_1
+dataset_missing[1,"X1"] <- NA
+dataset_missing[501,"X1"] <- NA
+```
+
+Then we fit the DPMM whilst standardising values.
+
+```{r}
+posteriors <- runModel(dataset_missing, 
+                       mcmc_iterations = 20000, 
+                       L = 10, 
+                       mcmc_chains = 4, 
+                       standardise = TRUE)
+```
+
+
+### Check fitting diagnostics
+
+We can do the same diagnostic checks. First the alpha values.
+
+```{r, fig.dim=c(10,6)}
+plot_alpha(posteriors, nburn = 10000, thinning = 1)
+```
+
+Then comparing the DPMM against the original dataset.
+
+```{r}
+plot_ggpairs(posteriors, 
+             newdata = dataset_1, 
+             nburn = 10000)
+```
+
+
+### Imputation of missing values
+
+We can check how well are those missing values being imputed during the model fitting. Here, we are only checking chain 1, but it can be repeated for all other chains.
+
+```{r}
+intercept_1 = (dataset_1[1,"X1"]-posteriors$mean_values[1])/posteriors$sd_values[1]
+ggplot() +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%
+                     select(`x_cont_miss[1, 1]`)%>%
+                     dplyr::slice(10000:20000)%>%
+                     unlist())) +
+  geom_vline(aes(xintercept = intercept_1))
+intercept_2 = (dataset_1[501,"X1"]-posteriors$mean_values[1])/posteriors$sd_values[1]
+ggplot() +
+  geom_density(aes(x = as_tibble(posteriors$samples$chain1)%>%
+                     select(`x_cont_miss[2, 1]`)%>%
+                     dplyr::slice(10000:20000)%>%
+                     unlist())) +
+  geom_vline(aes(xintercept = intercept_2))
+```
+
+

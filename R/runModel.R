@@ -43,6 +43,7 @@
 #' @import dplyr
 #'
 #' @examples
+#' \dontrun{
 #' ## load dataset
 #' data(dataset_1)
 #' 
@@ -52,7 +53,9 @@
 #'                        L = 6, 
 #'                        mcmc_chains = 2, 
 #'                        standardise = TRUE)
-#'
+#' }
+#' 
+#' 
 #' @export
 runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, standardise = TRUE) {
   

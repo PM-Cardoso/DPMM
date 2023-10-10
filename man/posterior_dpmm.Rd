@@ -33,6 +33,7 @@ Something
 Sample missing values from the fitted DPMM
 }
 \examples{
+\dontrun{
 ## load dataset
 data(dataset_1)
 
@@ -53,6 +54,7 @@ dataset_missing_predict[,1] <- as.numeric(NA)
 posteriors.dpmmfit <- predict(posteriors, 
                               dataset_missing_predict, 
                               samples = c(1:100))
-                       
+}
+
 
 }

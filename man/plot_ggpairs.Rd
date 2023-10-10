@@ -26,6 +26,7 @@ A pairs plot.
 Pairs plot of all variables sampled
 }
 \examples{
+\dontrun{
 ## load dataset
 data(dataset_1)
 
@@ -42,5 +43,7 @@ plot_ggpairs(posteriors, iterations = seq(500,1500,1))
 
 ## pairs plot comparing the original dataset against random draws from the DPMM posterior
 plot_ggpairs(posteriors, dataset_1, nburn = 500)
+}
+
 
 }

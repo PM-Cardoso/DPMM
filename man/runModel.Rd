@@ -40,6 +40,7 @@ runModel(
 This function fits the Dirichlet Process Mixture Model (DPMM).
 }
 \examples{
+\dontrun{
 ## load dataset
 data(dataset_1)
 
@@ -49,5 +50,7 @@ posteriors <- runModel(dataset_1,
                        L = 6, 
                        mcmc_chains = 2, 
                        standardise = TRUE)
+}
+
 
 }

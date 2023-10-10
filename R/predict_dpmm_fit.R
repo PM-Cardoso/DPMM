@@ -10,6 +10,7 @@
 #' @return A list with n entries for n rows with missingness, each entry is a dataframe with the sampled missing values.
 #'
 #' @examples
+#' \dontrun{
 #' ## load dataset
 #' data(dataset_1)
 #' 
@@ -30,7 +31,8 @@
 #' posteriors.dpmmfit <- predict(posteriors, 
 #'                               dataset_missing_predict, 
 #'                               samples = c(1:100))
-#'                        
+#' }
+#'                         
 #'
 #' @export
 predict_dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...) {

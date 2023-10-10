@@ -12,6 +12,7 @@
 #' @import cowplot
 #'
 #' @examples
+#' \dontrun{
 #' ## load dataset
 #' data(dataset_1)
 #' 
@@ -25,6 +26,8 @@
 #'                               
 #' ## diagnostic plot
 #' plot_alpha(posteriors, nburn = 50, thinning = 1)
+#' }
+#'
 #'
 #' @export
 plot_alpha <- function(x, nburn, thinning, ...) {

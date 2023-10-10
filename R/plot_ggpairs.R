@@ -17,6 +17,7 @@
 #' @import ggplot2
 #'
 #' @examples
+#' \dontrun{
 #' ## load dataset
 #' data(dataset_1)
 #' 
@@ -33,7 +34,9 @@
 #' 
 #' ## pairs plot comparing the original dataset against random draws from the DPMM posterior
 #' plot_ggpairs(posteriors, dataset_1, nburn = 500)
-#'
+#' }
+#' 
+#' 
 #' @export
 plot_ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) {
   

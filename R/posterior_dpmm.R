@@ -28,6 +28,7 @@
 #' 
 #' 
 #' @examples
+#' \dontrun{
 #' ## load dataset
 #' data(dataset_1)
 #' 
@@ -48,7 +49,8 @@
 #' posteriors.dpmmfit <- predict(posteriors, 
 #'                               dataset_missing_predict, 
 #'                               samples = c(1:100))
-#'                        
+#' }
+#' 
 #'
 #' @export
 posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_vars = NULL, mcmc_chain = NULL) {

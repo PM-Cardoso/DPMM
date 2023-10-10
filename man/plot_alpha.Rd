@@ -22,6 +22,7 @@ A panel plot.
 Number of Components, Component ranking and trace plot of alpha values.
 }
 \examples{
+\dontrun{
 ## load dataset
 data(dataset_1)
 
@@ -35,5 +36,7 @@ posteriors <- runModel(dataset_1,
                               
 ## diagnostic plot
 plot_alpha(posteriors, nburn = 50, thinning = 1)
+}
+
 
 }

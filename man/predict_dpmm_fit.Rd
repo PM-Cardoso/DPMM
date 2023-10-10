@@ -22,6 +22,7 @@ A list with n entries for n rows with missingness, each entry is a dataframe wit
 Predict missing values from the fitted DPMM.
 }
 \examples{
+\dontrun{
 ## load dataset
 data(dataset_1)
 
@@ -42,6 +43,7 @@ dataset_missing_predict[,1] <- as.numeric(NA)
 posteriors.dpmmfit <- predict(posteriors, 
                               dataset_missing_predict, 
                               samples = c(1:100))
-                       
+}
+                        
 
 }

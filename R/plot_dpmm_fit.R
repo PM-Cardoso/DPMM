@@ -12,6 +12,7 @@
 #' @import coda
 #'
 #' @examples
+#' \dontrun{
 #' ## load dataset
 #' data(dataset_1)
 #' 
@@ -23,6 +24,8 @@
 #'                        standardise = TRUE)
 #' ## plot trace plots
 #' plot(posteriors)
+#' }
+#'
 #'
 #' @export
 plot_dpmm_fit <- function(x, trace = TRUE, density = TRUE, ...) {
