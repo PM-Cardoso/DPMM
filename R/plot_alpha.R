@@ -7,9 +7,10 @@
 #' @param thinning Iterations 
 #' @param ... other parameters used by ggplot2.
 #'
-#' @return A panel plot.
+#' @return A 'ggplot' panel plot.
 #'
 #' @import cowplot
+#' @importFrom purrr discard
 #'
 #' @examples
 #' \dontrun{
@@ -32,17 +33,11 @@
 #' @export
 plot_alpha <- function(x, nburn, thinning, ...) {
   
+  #:---------------------------------------------------------------
+  ## Check before running function
   if(missing(x)) stop("'x' needs to be supplied")
   if (!inherits(x, "dpmm_fit")) stop("'x' needs to be of class 'dpmm_fit'")
     
-  
-  #   if (is.list(x) == TRUE) {
-  #     if (class(x[[1]]) != "dpmm_fit") stop("'x' needs to be of class 'dpmm_fit' or a list of 'dpmm_fit'")
-  #   } else {
-  #     stop("'x' needs to be of class 'dpmm_fit' or a list of 'dpmm_fit'")
-  #   }
-  # }
-  
   if(missing(nburn)) stop("'nburn' must be provided")
   if(!missing(nburn)) {
     if (is.numeric(nburn) == FALSE) {
@@ -57,13 +52,18 @@ plot_alpha <- function(x, nburn, thinning, ...) {
     }
   }
   
+  #:---------------------------------------------------------------
+  ## Generate objects that will contain the information for plots
   summary.clusters_complete <- NULL
   postComp_complete <- NULL
   postAlpha_complete <- NULL
   
-  ## iterate through the chains
+  #:---------------------------------------------------------------
+  ## Iterate through all chains
   for (chain in 1:x$mcmc_chains) {
-      
+    
+    title_chain <- paste0("Chain ",chain)
+    
     if (x$mcmc_chains == 1) {
       samples <- x$samples %>%
         as_tibble()
@@ -74,19 +74,34 @@ plot_alpha <- function(x, nburn, thinning, ...) {
       
     iterations <- seq(nburn,nrow(samples), thinning)
     
+    
+    #:---------------------------------------------------------------
+    ## Plot A - Number of Components
+    postComp <- samples %>% 
+      select(starts_with("z")) %>%
+      apply(1, function(x)  length(unique(x))) %>%
+      as.data.frame() %>%
+      cbind(Iteration = rep(1:nrow(samples), 1)) %>%
+      cbind(Chain = rep(title_chain, nrow(samples)))
+    
+    postComp_complete <- rbind(postComp_complete, postComp)
+    
+    #:---------------------------------------------------------------
+    ## Plot B - Average number of individuals for ranked components
     samples_summary <- samples %>%
-    select(starts_with("z"))
+      select(starts_with("z"))
     
     summary.clusters <- NULL
     for (i in iterations) {
       row_summary <- samples_summary[i,] %>% t() %>% factor() %>% summary()
       summary.clusters <- dplyr::bind_rows(summary.clusters, row_summary)
     }
-    title_chain <- paste0("Chain ",chain)
+    
     summary.clusters <- summary.clusters %>%
       apply(1, function(x) x[order(x, decreasing = TRUE)]) %>%
       t() %>%
       as.data.frame() %>%
+      discard(~all(is.na(.x))) %>%
       mutate_all(~replace(., is.na(.), 0)) %>%
       colMeans() %>%
       as.data.frame() %>%
@@ -99,16 +114,8 @@ plot_alpha <- function(x, nburn, thinning, ...) {
     
     summary.clusters_complete <- rbind(summary.clusters_complete, summary.clusters) 
     
-    
-    postComp <- samples %>% 
-      select(starts_with("z")) %>%
-      apply(1, function(x)  length(unique(x))) %>%
-      as.data.frame() %>%
-      cbind(Iteration = rep(1:nrow(samples), 1)) %>%
-      cbind(Chain = rep(title_chain, nrow(samples)))
-    
-    postComp_complete <- rbind(postComp_complete, postComp)
-    
+    #:---------------------------------------------------------------
+    ## Plot C - Alpha values
     postAlpha <- samples %>%
       select("alpha") %>%
       mutate(Iteration = rep(1:nrow(samples), 1)) %>%
@@ -119,6 +126,8 @@ plot_alpha <- function(x, nburn, thinning, ...) {
       
   }
   
+  #:---------------------------------------------------------------
+  ## Formatting datasets
   summary.clusters_complete <- summary.clusters_complete %>%
     mutate(Chain = factor(Chain))
   
@@ -129,13 +138,15 @@ plot_alpha <- function(x, nburn, thinning, ...) {
     mutate(Chain = factor(Chain))
   
   
-  #plot
+  #:---------------------------------------------------------------
+  ## Plot
   plot <- plot_grid(
     
     plot_grid(
       
       postComp_complete %>%
         ggplot() +
+        geom_vline(xintercept = nburn, colour = "black", linetype = "dashed") +
         geom_path(aes(x = Iteration, y = `.`, colour = Chain), linewidth = 0.4, alpha = 0.7) +
         theme_bw() +
         scale_y_continuous(breaks = seq(1,200, by =1)) +
@@ -148,7 +159,7 @@ plot_alpha <- function(x, nburn, thinning, ...) {
       
       summary.clusters_complete %>%
         ggplot() +
-        geom_col(aes(x = key, y = value, colour = Chain, fill = Chain), size = 0.2, position = "dodge2") +
+        geom_col(aes(x = key, y = value, colour = Chain, fill = Chain), linewidth = 0.2, position = "dodge2") +
         theme_bw() +
         labs(title = "Average Number of Individuals for Ranked Components",
              x = "Component Ranking",
@@ -165,6 +176,7 @@ plot_alpha <- function(x, nburn, thinning, ...) {
     
     postAlpha_complete %>%
       ggplot() +
+      geom_vline(xintercept = nburn, colour = "black", linetype = "dashed") +
       geom_line(aes(x = Iteration, y = alpha, colour = Chain), alpha = 0.7) +
       theme_bw() +
       labs(title = "Alpha values",

@@ -9,8 +9,8 @@
 #' @param cat_vars names of categorical variables
 #' @param mcmc_chain MCMC posterior samples of DPMM parameters
 #'
-#' @return Something
-#'
+#' @return A list with n entries of n rows with missingness
+#' 
 #'
 #' @import condMVNorm
 #' @import mvtnorm
@@ -46,20 +46,24 @@
 #' dataset_missing_predict[,1] <- as.numeric(NA)
 #' 
 #' # predict missing values
-#' posteriors.dpmmfit <- predict(posteriors, 
-#'                               dataset_missing_predict, 
-#'                               samples = c(1:100))
+#' posteriors.dpmmfit <- predict_dpmm_fit(posteriors, 
+#'                                        dataset_missing_predict, 
+#'                                        samples = c(1:100))
 #' }
 #' 
 #'
 #' @export
 posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_vars = NULL, mcmc_chain = NULL) {
- 
-  # seed
+
+
+  #:----------------------------------------------------------
+  # check whether seed is provided
   if (!is.null(seed)) {
     set.seed(seed)
   }
   
+  #:----------------------------------------------------------
+  # check whether cat_vars is provided
   if (!is.null(cat_vars)) {
     ndisc = length(cat_vars)
     # ndiscdim = max(unique(as.numeric(patient[,cat_vars])))
@@ -71,16 +75,20 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
     ndiscdim <- max(ndiscdim)
   }
   
-  ## Iterate through all chains
+  #:----------------------------------------------------------
+  ## Iterate through all chains fitted in the DPMM
   for (mcmc_chains in 1:mcmc_chain) {
     
+    # Extract the parameter posterior samples for the current chain 
     if (mcmc_chain == 1) {
       samples_chain <- samples
     } else {
       samples_chain <- samples[[mcmc_chains]]
     }
     
-    # extract weights
+    
+    #:----------------------------------------------------------
+    ## Extract components weights
     postW <- samples_chain %>%
       as_tibble() %>%
       select(starts_with("v[")) %>%
@@ -104,9 +112,10 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
       mutate(data = map(data, "value")) %>%
       rename(w = data)
     
-    # this allows for dpmm with continuous/categorical/continuous + categorical
-    # so we check if vars names are null or not
+    #:----------------------------------------------------------
+    ## If cont_vars is provided (and hence the model is fitted to continuous variables)
     if (!is.null(cont_vars)) {
+      ### Extract posterior samples of component means
       postMu <- samples_chain %>%
         as_tibble() %>%
         select(starts_with("muL")) %>%
@@ -128,6 +137,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             t()
         })) %>%
         rename(muL = data)
+      ### Extract posterior samples of component precision matrices
       postTau <- samples_chain %>%
         as_tibble() %>%
         select(starts_with("tauL")) %>%
@@ -152,7 +162,11 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         })) %>%
         rename(tauL = data) 
     }
+    
+    #:----------------------------------------------------------
+    ## If cat_vars is provided (and hence the model is fitted to categorical variables)
     if (!is.null(cat_vars)) {
+      ### Extract posterior samples of component level probabilities
       postPhi <- samples_chain %>%
         as_tibble() %>%
         select(starts_with("phiL")) %>%
@@ -178,41 +192,52 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         rename(phiL = data)
     }
     
+    #:----------------------------------------------------------
+    ## Organise data in format needed for the function
     
-    # output of the function
+    ## rows being used
     ordered_patient <- patient[,c(cont_vars,cat_vars)]
-    # I decided to do the following
-    #    input: several patients with several variables
-    #    output: a list of patients, with matrix of missing vars
     
-    # number of patients in data
-    number_vars <- length(c(cont_vars))
-    number_patients <- nrow(ordered_patient)
-    number_samples <- nrow(samples_chain)
+    ## The output is in the following shape
+    ###    input: several patients with several variables
+    ###    output: a list of patients, with matrix of missing vars
     
+    number_vars <- length(c(cont_vars)) ## number of continuous variables
+    number_patients <- nrow(ordered_patient) ## number of patients
+    number_samples <- nrow(samples_chain)  ## number of iterations
+    
+    ## output list
     posterior <- vector(mode = "list", length = number_patients)
     
+    ## for each entry on the list (each row)
     for (i in 1:number_patients) {
+      ## check which variables are missing
       missing_vars <- ordered_patient[i,] %>%
         is.na() %>%
         colSums()
       
-      
+      ## collect the name of the variables missing
       missing_vars_names <- colnames(ordered_patient)[missing_vars > 0]
       
+      ## add matrix of sampled values with the same number of rows are the model iterations
       posterior[[i]] <- matrix(as.numeric(NA), nrow = number_samples, ncol = length(missing_vars_names))
       
     }
     
+    
+    #:----------------------------------------------------------
+    ## Iterate through each of the rows with missing data provided
     for (iteration_patient in 1:number_patients) {
       
+      ## Extract data from current row
       current_patient <- ordered_patient[iteration_patient,]
       
+      ## if current row has categorical variables, turn them into numerical values
       if (!is.null(cat_vars)) {
         current_patient[cat_vars] <- as.numeric(current_patient[cat_vars])
       }
       
-      #replicate patient into number of samples
+      ## replicate row into number of samples
       current_data <- as.data.frame(lapply(current_patient, rep, number_samples)) %>%
         mutate(iter = 1:n()) %>%
         gather(var, value, -iter) %>%
@@ -222,7 +247,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         mutate(data = map(data, "value"))  %>%
         rename(patient = data)
       
-      # put together all posterior samples
+      ## put together all posterior samples necessary for the prediction
       post <- current_data %>%
         inner_join(postW, by = "iter")
       if (!is.null(cont_vars)) {
@@ -235,10 +260,17 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
           inner_join(postPhi, by = "iter")
       }
       
+      
+      #:----------------------------------------------------------
+      ## Iterate through each of the rows with missing data provided
+      
       # draw conditional for only cont, only cat, cont and cat
       if (!is.null(cont_vars) & is.null(cat_vars)) {
-        #   cont
+        
+        #:----------------------------------------------------------
+        ## Only continuous variables in the dataset
         preds <- post %>%
+          ## Adjust component weights depending on available values and choose one option
           mutate(w = pmap(list(w, muL, tauL, patient), function(w, mu, tau, patient) {
             # vars without missing values
             variables <- which(!is.na(patient))
@@ -270,12 +302,15 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             }
             
           })) %>%
+          ## Keep only means for the chosen component
           mutate(muL = map2(w, muL, function(w, mu) {
             mu[w, ]
           })) %>%
+          ## Keep only precision matrices for the chosen component
           mutate(tauL = map2(w, tauL, function(w, tau) {
             tau[, , w]
           })) %>%
+          ## Make sure precision matrices have equal lower and upper triangles (rounding error)
           mutate(tauL = map(tauL, function(tau) {
             tauL <- matrix(unlist(tauL), ncol = number_vars)
             
@@ -284,7 +319,9 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             }
             tauL
           })) %>%
+          ## Sample missing values
           mutate(value = pmap(list(patient, muL, tauL), function(patient, mu, tau) {
+            
             # vars without missing values
             variables_given <- which(!is.na(patient))
             # vars with missing values
@@ -300,8 +337,9 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
           }))
         
       } else if (is.null(cont_vars) & !is.null(cat_vars)) {
-        #   cat
+        ## Only categorical variables in the dataset
         preds <- post %>%
+          ## Adjust component weights depending on available values and choose one option
           mutate(w = pmap(list(w, phiL, patient), function(w, phi, patient) {
             variables <- which(!is.na(patient))
             
@@ -331,9 +369,11 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
               draw <- which.max(rmultinom(n = 1, size = 1, prob = w))
             }
           })) %>%
+          ## Keep only probabilities for the chosen component
           mutate(phiL = map2(w, phiL, function(w, psi) {
             psi[,,w]
           })) %>%
+          ## Sample missing values
           mutate(value = pmap(list(patient, phiL), function(patient, phi) {
             variables <- which(is.na(patient))
             
@@ -349,10 +389,10 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         
         
       } else {
-        #   cont and cat
+        ## Both continuous and categorical variables in the dataset
         preds <- post %>%
+          ## Adjust component weights depending on available values and choose one option
           mutate(w = pmap(list(w, muL, tauL, phiL, patient), function(w, mu, tau, phi, patient) {
-            
             
             # which cont vars to marginalize 
             continuous_patient <- patient[1:length(cont_vars)]
@@ -364,7 +404,6 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             
             if (!is_empty(continuous_vars_given) & !is_empty(categorical_vars)) {
               # if there is continuous vars and categorical vars for w-conditional
-              
               
               # marg matrices (with var that is missing)
               marg_mean <- mu[, continuous_vars_given, drop = FALSE]
@@ -470,12 +509,15 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             }
             
           })) %>%
+          ## Keep only means for the chosen component
           mutate(muL = map2(w, muL, function(w, mu) {
             mu[w, ]
           })) %>%
+          ## Keep only precision matrices for the chosen component
           mutate(tauL = map2(w, tauL, function(w, tau) {
             tau[, , w]
           })) %>%
+          ## Make sure precision matrices have equal lower and upper triangles (rounding error)
           mutate(tauL = map(tauL, function(tau) {
             tauL <- matrix(unlist(tauL), ncol = number_vars)
             
@@ -484,9 +526,11 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             }
             tauL
           })) %>%
+          ## Keep only probabilities for the chosen component
           mutate(phiL = map2(w, phiL, function(w, psi) {
             psi[,,w]
           })) %>%
+          ## Sample missing values
           mutate(value = pmap(list(patient, muL, tauL, phiL), function(patient, mu, tau, phi) {
             
             # which cont vars to marginalize 
@@ -525,6 +569,8 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
           }))
       }
       
+      #:----------------------------------------------------------
+      ## Extract only the values imputed
       preds <- preds %>%
         select(iter, value) %>%
         unnest(cols = value) %>%
@@ -532,27 +578,29 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         select(-iter) %>%
         set_names(colnames(current_patient)[is.na(current_patient)])
       
-    
+      #:----------------------------------------------------------
+      ## Add the values to the list of estimated values
       for (posterior_columns in 1:ncol(posterior[[iteration_patient]])) {
 
         posterior[[iteration_patient]][,posterior_columns] <- unlist(preds[,posterior_columns])
 
       }
+      
       posterior[[iteration_patient]] <- posterior[[iteration_patient]] %>%
         as.data.frame() %>%
         set_names(colnames(current_patient)[which(is.na(current_patient))])
 
-      
-  
     }
   
-  
+    
+    #:----------------------------------------------------------
+    ## Add the values to the output list
     if (mcmc_chains == 1) {
       # if on the first chain, just use the actual list
       predictions_final <- posterior
       
     } else {
-      # if on other chains, append new list
+      # if on other chains, append other chain values to the bottom of the matrix
       for (i in 1:length(predictions_final)) {
         
         predictions_final[[i]] <- rbind(

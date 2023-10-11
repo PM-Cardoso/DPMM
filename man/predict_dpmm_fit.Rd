@@ -40,9 +40,9 @@ dataset_missing_predict <- dataset_missing[rows,]
 dataset_missing_predict[,1] <- as.numeric(NA)
 
 # predict missing values
-posteriors.dpmmfit <- predict(posteriors, 
-                              dataset_missing_predict, 
-                              samples = c(1:100))
+posteriors.dpmmfit <- predict_dpmm_fit(posteriors, 
+                                       dataset_missing_predict, 
+                                       samples = c(1:100))
 }
                         
 

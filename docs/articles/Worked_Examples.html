@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">DPMM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.5</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,14 @@
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
 </form>
 
-      <ul class="navbar-nav"></ul>
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/PM-Cardoso/DPMM/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 
     
@@ -67,7 +74,7 @@
       <img src="" class="logo" alt=""><h1>Worked Examples</h1>
             
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/PM-Cardoso/DPMM/blob/HEAD/vignettes/Worked_Examples.Rmd" class="external-link"><code>vignettes/Worked_Examples.Rmd</code></a></small>
       <div class="d-none name"><code>Worked_Examples.Rmd</code></div>
     </div>
 
@@ -523,8 +530,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    1</span></span>
-<span><span class="co">#&gt;         1 1497</span></span>
-<span><span class="co">#&gt;         2    4</span></span>
+<span><span class="co">#&gt;         1 1496</span></span>
+<span><span class="co">#&gt;         2    5</span></span>
 <span></span>
 <span><span class="va">imputed_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="va">posteriors</span><span class="op">$</span><span class="va">samples</span><span class="op">$</span><span class="va">chain1</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">`x_disc_miss[2, 1]`</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -536,8 +543,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    2</span></span>
-<span><span class="co">#&gt;         1    2</span></span>
-<span><span class="co">#&gt;         2 1499</span></span></code></pre></div>
+<span><span class="co">#&gt;         1    3</span></span>
+<span><span class="co">#&gt;         2 1498</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="example-4-1">Example 4<a class="anchor" aria-label="anchor" href="#example-4-1"></a>
@@ -790,8 +797,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           True Value</span></span>
 <span><span class="co">#&gt; Prediction    1</span></span>
-<span><span class="co">#&gt;          1 1483</span></span>
-<span><span class="co">#&gt;          2   18</span></span>
+<span><span class="co">#&gt;          1 1496</span></span>
+<span><span class="co">#&gt;          2    5</span></span>
 <span></span>
 <span><span class="va">imputed_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="va">posteriors</span><span class="op">$</span><span class="va">samples</span><span class="op">$</span><span class="va">chain1</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">`x_disc_miss[2, 1]`</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -803,8 +810,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           True Value</span></span>
 <span><span class="co">#&gt; Prediction    2</span></span>
-<span><span class="co">#&gt;          1   12</span></span>
-<span><span class="co">#&gt;          2 1489</span></span></code></pre></div>
+<span><span class="co">#&gt;          1    8</span></span>
+<span><span class="co">#&gt;          2 1493</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -963,8 +970,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    1</span></span>
-<span><span class="co">#&gt;         1 1496</span></span>
-<span><span class="co">#&gt;         2    5</span></span></code></pre></div>
+<span><span class="co">#&gt;         1 1500</span></span>
+<span><span class="co">#&gt;         2    1</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="example-2-3">Example 2<a class="anchor" aria-label="anchor" href="#example-2-3"></a>
@@ -1035,8 +1042,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    1</span></span>
-<span><span class="co">#&gt;         1 1495</span></span>
-<span><span class="co">#&gt;         2    6</span></span></code></pre></div>
+<span><span class="co">#&gt;         1 1490</span></span>
+<span><span class="co">#&gt;         2   11</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="example-3-2">Example 3<a class="anchor" aria-label="anchor" href="#example-3-2"></a>
@@ -1094,8 +1101,8 @@ explained by ‘X2’.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    1</span></span>
-<span><span class="co">#&gt;         1 1498</span></span>
-<span><span class="co">#&gt;         2    3</span></span></code></pre></div>
+<span><span class="co">#&gt;         1 1497</span></span>
+<span><span class="co">#&gt;         2    4</span></span></code></pre></div>
 <p>Then we check ‘X4’, which is well explained by ‘X2’ but should have
 two categories.</p>
 <div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
@@ -1109,9 +1116,8 @@ two categories.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted   1</span></span>
-<span><span class="co">#&gt;         1 752</span></span>
-<span><span class="co">#&gt;         2 741</span></span>
-<span><span class="co">#&gt;         3   6</span></span>
+<span><span class="co">#&gt;         1 792</span></span>
+<span><span class="co">#&gt;         2 707</span></span>
 <span><span class="co">#&gt;         4   2</span></span></code></pre></div>
 <p>Then we check ‘X1’, which is well explained by ‘X2’.</p>
 <div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
@@ -1272,7 +1278,7 @@ be repeated for all other chains.</p>
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by .</p>
+<p>Developed by Pedro Cardoso, TJ McKinley.</p>
 </div>
 
 <div class="pkgdown-footer-right">

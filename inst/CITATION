@@ -1,11 +1,8 @@
 bibentry(
   bibtype  = "Article",
   title    = "Dirichlet process mixture models to estimate outcomes for individuals with missing predictor data: application to predict optimal type 2 diabetes therapy in electronic health record data",
-  author   = "Pedro Cardoso and John M. Dennis and Jack Bowden and Beverley M. Shields and Trevelyan J. McKinley and the MASTERMIND Consortium",
+  author   = "Pedro Cardoso and John M. Dennis and Jack Bowden and Beverley M. Shields and Trevelyan J. McKinley",
   journal  = "medRxiv",
   year     = "2023",
-  volume   = ,
-  number   = ,
-  pages    = ,
   doi      = "10.1101/2022.07.26.22278066"
 )

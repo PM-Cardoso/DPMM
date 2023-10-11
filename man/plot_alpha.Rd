@@ -16,7 +16,7 @@ plot_alpha(x, nburn, thinning, ...)
 \item{...}{other parameters used by ggplot2.}
 }
 \value{
-A panel plot.
+A 'ggplot' panel plot.
 }
 \description{
 Number of Components, Component ranking and trace plot of alpha values.
