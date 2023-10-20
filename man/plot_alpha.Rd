@@ -19,7 +19,7 @@ plot_alpha(x, nburn, thinning, ...)
 A 'ggplot' panel plot.
 }
 \description{
-Number of Components, Component ranking and trace plot of alpha values.
+Number of Components, Component ranking, trace plot of alpha values and trace plot of log probability density.
 }
 \examples{
 \dontrun{

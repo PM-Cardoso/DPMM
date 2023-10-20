@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">DPMM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,8 +119,10 @@ standardised.</p>
 <span>                       mcmc_chains <span class="op">=</span> <span class="fl">2</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, tauL, v, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, tauL, v, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -196,8 +198,10 @@ in the DPMM.</p>
 <span>                       mcmc_chains <span class="op">=</span> <span class="fl">2</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, tauL, v, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, tauL, v, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -261,8 +265,10 @@ dataset. Let’s introduce some misisngness in both clusters.</p>
 <span>                       mcmc_chains <span class="op">=</span> <span class="fl">2</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, tauL, v, x_cont_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, tauL, v, x_cont_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -317,8 +323,10 @@ continuous values.</p>
 <span>                       mcmc_chains <span class="op">=</span> <span class="fl">2</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, tauL, v, x_cont_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, tauL, v, x_cont_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -379,8 +387,10 @@ continuous values.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       mcmc_chains <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -495,8 +505,10 @@ original dataset. Let’s introduce some misisngness in both clusters.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, x_disc_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, x_disc_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -530,8 +542,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    1</span></span>
-<span><span class="co">#&gt;         1 1495</span></span>
-<span><span class="co">#&gt;         2    6</span></span>
+<span><span class="co">#&gt;         1 1500</span></span>
+<span><span class="co">#&gt;         2    1</span></span>
 <span></span>
 <span><span class="va">imputed_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="va">posteriors</span><span class="op">$</span><span class="va">samples</span><span class="op">$</span><span class="va">chain1</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">`x_disc_miss[2, 1]`</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -543,8 +555,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    2</span></span>
-<span><span class="co">#&gt;         1    3</span></span>
-<span><span class="co">#&gt;         2 1498</span></span></code></pre></div>
+<span><span class="co">#&gt;         1    6</span></span>
+<span><span class="co">#&gt;         2 1495</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="example-4-1">Example 4<a class="anchor" aria-label="anchor" href="#example-4-1"></a>
@@ -562,8 +574,10 @@ original dataset. Let’s introduce some misisngness in both clusters.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, x_cont_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, x_cont_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -623,8 +637,10 @@ clusters.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, x_cont_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, x_cont_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -697,8 +713,10 @@ be repeated for all other chains.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       mcmc_chains <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, phiL, v, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, phiL, v, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW sampler (1)</span></span>
 <span><span class="co">#&gt;   - alpha</span></span>
 <span><span class="co">#&gt; conjugate sampler (17)</span></span>
@@ -767,8 +785,10 @@ original dataset. Let’s introduce some misisngness in both clusters.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, phiL, v, x_disc_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, phiL, v, x_disc_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW sampler (1)</span></span>
 <span><span class="co">#&gt;   - alpha</span></span>
 <span><span class="co">#&gt; posterior_predictive sampler (2)</span></span>
@@ -797,8 +817,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           True Value</span></span>
 <span><span class="co">#&gt; Prediction    1</span></span>
-<span><span class="co">#&gt;          1 1490</span></span>
-<span><span class="co">#&gt;          2   11</span></span>
+<span><span class="co">#&gt;          1 1489</span></span>
+<span><span class="co">#&gt;          2   12</span></span>
 <span></span>
 <span><span class="va">imputed_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="va">posteriors</span><span class="op">$</span><span class="va">samples</span><span class="op">$</span><span class="va">chain1</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">`x_disc_miss[2, 1]`</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -810,8 +830,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           True Value</span></span>
 <span><span class="co">#&gt; Prediction    2</span></span>
-<span><span class="co">#&gt;          1   10</span></span>
-<span><span class="co">#&gt;          2 1491</span></span></code></pre></div>
+<span><span class="co">#&gt;          1    3</span></span>
+<span><span class="co">#&gt;          2 1498</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -834,8 +854,10 @@ continuous predictors and ‘X4’ categorical predictor.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:4, 1:4] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -923,8 +945,10 @@ original dataset. Let’s introduce some misisngness in both clusters.</p>
 <span>                       mcmc_chains <span class="op">=</span> <span class="fl">2</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, x_cont_miss, x_disc_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, x_cont_miss, x_disc_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -990,8 +1014,10 @@ clusters.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, x_cont_miss, x_disc_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, x_cont_miss, x_disc_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -1042,8 +1068,8 @@ be repeated for all other chains.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    1</span></span>
-<span><span class="co">#&gt;         1 1488</span></span>
-<span><span class="co">#&gt;         2   13</span></span></code></pre></div>
+<span><span class="co">#&gt;         1 1492</span></span>
+<span><span class="co">#&gt;         2    9</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="example-3-2">Example 3<a class="anchor" aria-label="anchor" href="#example-3-2"></a>
@@ -1063,8 +1089,10 @@ clusters.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, phiL, tauL, v, x_cont_miss, x_disc_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, phiL, tauL, v, x_cont_miss, x_disc_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -1101,8 +1129,8 @@ explained by ‘X2’.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted    1</span></span>
-<span><span class="co">#&gt;         1 1497</span></span>
-<span><span class="co">#&gt;         2    4</span></span></code></pre></div>
+<span><span class="co">#&gt;         1 1499</span></span>
+<span><span class="co">#&gt;         2    2</span></span></code></pre></div>
 <p>Then we check ‘X4’, which is well explained by ‘X2’ but should have
 two categories.</p>
 <div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
@@ -1116,10 +1144,10 @@ two categories.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          True</span></span>
 <span><span class="co">#&gt; Predicted   1</span></span>
-<span><span class="co">#&gt;         1 748</span></span>
-<span><span class="co">#&gt;         2 747</span></span>
-<span><span class="co">#&gt;         3   3</span></span>
-<span><span class="co">#&gt;         4   3</span></span></code></pre></div>
+<span><span class="co">#&gt;         1 740</span></span>
+<span><span class="co">#&gt;         2 755</span></span>
+<span><span class="co">#&gt;         3   2</span></span>
+<span><span class="co">#&gt;         4   4</span></span></code></pre></div>
 <p>Then we check ‘X1’, which is well explained by ‘X2’.</p>
 <div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">imputed_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="va">posteriors</span><span class="op">$</span><span class="va">samples</span><span class="op">$</span><span class="va">chain1</span><span class="op">)</span><span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -1153,8 +1181,10 @@ that they have a specific shape.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, tauL, v, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, tauL, v, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>
@@ -1226,8 +1256,10 @@ dataset. Let’s introduce some misisngness in both clusters.</p>
 <span>                       L <span class="op">=</span> <span class="fl">6</span>, </span>
 <span>                       standardise <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ===== Monitors =====</span></span>
-<span><span class="co">#&gt; thin = 1: alpha, muL, tauL, v, x_cont_miss, z</span></span>
+<span><span class="co">#&gt; thin = 1: alpha, logDens, muL, tauL, v, x_cont_miss, z</span></span>
 <span><span class="co">#&gt; ===== Samplers =====</span></span>
+<span><span class="co">#&gt; sumLogPostDens sampler (1)</span></span>
+<span><span class="co">#&gt;   - logDens</span></span>
 <span><span class="co">#&gt; RW_wishart sampler (1)</span></span>
 <span><span class="co">#&gt;   - R1[1:2, 1:2] </span></span>
 <span><span class="co">#&gt; RW sampler (2)</span></span>

@@ -254,6 +254,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               }
             }
           }
+          
+          # calculate log-density
+          logDens ~ dnorm(0, 1)    ## this distribution does not matter
+          
         })
 
         ## sample initial values
@@ -312,11 +316,11 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             tauL = tauL,
             phiL = phiL,
             x_cont_miss = x_cont_miss1,
-            x_disc_miss = x_disc_miss1
+            x_disc_miss = x_disc_miss1,
+            logDens = 0
           )
           inits
         }
-
 
         # adding this so that the logProb isn't -Inf
         logProb = "-Inf"
@@ -334,13 +338,11 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
 
         }
 
-
-
         #compile the model
         cmodel <- compileNimble(model)
 
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "x_disc_miss"), thin = 1, print = FALSE)
+        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "x_disc_miss", "logDens"), thin = 1, print = FALSE)
 
         ## add custom sampler
         for(i in 1:nrow(data$x_cont_miss)) {
@@ -365,7 +367,6 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             )
           }
         }
-
         
         #:-------------------------------------------------------------------
         ## If there are rows with incomplete continuous
@@ -475,6 +476,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
                 }
               }
             }
+            
+            # calculate log-density
+            logDens ~ dnorm(0, 1)    ## this distribution does not matter
+            
           })
 
 
@@ -530,7 +535,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               muL = muL,
               tauL = tauL,
               phiL = phiL,
-              x_cont_miss = x_cont_miss1
+              x_cont_miss = x_cont_miss1,
+              logDens = 0
             )
             inits
           }
@@ -556,10 +562,9 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           cmodel <- compileNimble(model)
 
           #set monitors
-          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss"), thin = 1, print = FALSE)
+          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "logDens"), thin = 1, print = FALSE)
 
 
-          ## add custom sampler
           ## add custom sampler
           for(i in 1:nrow(data$x_cont_miss)) {
 
@@ -583,7 +588,6 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               )
             }
           }
-
           
           #:-------------------------------------------------------------------
           ## If there are rows with incomplete categorical predictors
@@ -697,7 +701,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
                 }
               }
             }
-
+            
+            # calculate log-density
+            logDens ~ dnorm(0, 1)    ## this distribution does not matter
+            
           })
 
           ## sample initial values
@@ -751,7 +758,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               muL = muL,
               tauL = tauL,
               phiL = phiL,
-              x_disc_miss = x_disc_miss1
+              x_disc_miss = x_disc_miss1,
+              logDens = 0
             )
             inits
           }
@@ -777,12 +785,11 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           cmodel <- compileNimble(model)
 
           #set monitors
-          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_disc_miss"), thin = 1, print = FALSE)
+          config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_disc_miss", "logDens"), thin = 1, print = FALSE)
 
-
+          
         }
       }
-
       
       #:-------------------------------------------------------------------
       ## If there are only complete rows with continuous and categorical predictors
@@ -848,7 +855,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             }
           }
         }
-
+        
+        # calculate log-density
+        logDens ~ dnorm(0, 1)    ## this distribution does not matter
+        
       })
 
 
@@ -896,7 +906,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
           kappa1 = kappa1,
           muL = muL,
           tauL = tauL,
-          phiL = phiL
+          phiL = phiL,
+          logDens = 0
         )
         inits
       }
@@ -921,9 +932,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
       cmodel <- compileNimble(model)
 
       #set monitors
-      config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL"), thin = 1, print = FALSE)
-
-
+      config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "logDens"), thin = 1, print = FALSE)
+      
     }
 
   } else {
@@ -999,6 +1009,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             muL[i, ] ~ dmnorm(mu0[], prec = tau0[, ])
             tauL[, , i] ~ dwish(R1[, ], kappa1)
           }
+          
+          # calculate log-density
+          logDens ~ dnorm(0, 1)    ## this distribution does not matter
+          
         })
 
         ## sample initial values
@@ -1038,7 +1052,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             kappa1 = kappa1,
             muL = muL,
             tauL = tauL,
-            x_cont_miss = x_cont_miss1
+            x_cont_miss = x_cont_miss1,
+            logDens = 0
           )
           inits
         }
@@ -1066,7 +1081,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         cmodel <- compileNimble(model)
 
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "x_cont_miss"), thin = 1, print = FALSE)
+        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "x_cont_miss", "logDens"), thin = 1, print = FALSE)
 
 
         ## add custom sampler
@@ -1092,7 +1107,6 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             )
           }
         }
-
         
         #:-------------------------------------------------------------------
         ## If there are only complete rows of continuous predictors
@@ -1139,6 +1153,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             muL[i, ] ~ dmnorm(mu0[], prec = tau0[, ])
             tauL[, , i] ~ dwish(R1[, ], kappa1)
           }
+          
+          # calculate log-density
+          logDens ~ dnorm(0, 1)    ## this distribution does not matter
+          
         })
 
         ## sample initial values
@@ -1172,7 +1190,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             R1 = R1,
             kappa1 = kappa1,
             muL = muL,
-            tauL = tauL
+            tauL = tauL,
+            logDens = 0
           )
           inits
         }
@@ -1199,8 +1218,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         cmodel <- compileNimble(model)
 
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha"), thin = 1, print = FALSE)
-
+        config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "logDens"), thin = 1, print = FALSE)
+        
       }
 
       
@@ -1285,6 +1304,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               }
             }
           }
+          
+          # calculate log-density
+          logDens ~ dnorm(0, 1)    ## this distribution does not matter
+          
         })
 
         ## sample initial values
@@ -1328,7 +1351,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             z = z,
             zmiss = zmiss,
             phiL = phiL,
-            x_disc_miss = x_disc_miss1
+            x_disc_miss = x_disc_miss1,
+            logDens = 0
           )
           inits
         }
@@ -1353,8 +1377,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         cmodel <- compileNimble(model)
 
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "x_disc_miss"), thin = 1, print = FALSE)
-
+        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "x_disc_miss", "logDens"), thin = 1, print = FALSE)
+        
         
         #:-------------------------------------------------------------------
         ## If there are only rows with complete categorical predictors
@@ -1404,6 +1428,10 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
               }
             }
           }
+          
+          # calculate log-density
+          logDens ~ dnorm(0, 1)    ## this distribution does not matter
+          
         })
 
         ## sample initial values
@@ -1438,7 +1466,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
             v = v,
             w = w,
             z = z,
-            phiL = phiL
+            phiL = phiL,
+            logDens = 0
           )
           inits
         }
@@ -1464,12 +1493,16 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
         cmodel <- compileNimble(model)
 
         #set monitors
-        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL"), thin = 1, print = FALSE)
-
+        config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "logDens"), thin = 1, print = FALSE)
+        
       }
     }
 
   }
+  
+  ## add custom sampler for log density
+  config$removeSamplers('logDens')   ## remove sampler assigned to 'logDens'
+  config$addSampler(target = 'logDens', type = 'sumLogPostDens')   ## add our custom sampler
   
   ## print config
   print(config)

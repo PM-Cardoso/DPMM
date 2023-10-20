@@ -1,6 +1,6 @@
 #' Diagnostic Plot
 #'
-#' Number of Components, Component ranking and trace plot of alpha values.
+#' Number of Components, Component ranking, trace plot of alpha values and trace plot of log probability density.
 #'
 #' @param x object class 'dpmm_fit'.
 #' @param nburn Iterations to be discarded in the plot of component rankings
@@ -9,7 +9,7 @@
 #'
 #' @return A 'ggplot' panel plot.
 #'
-#' @import cowplot
+#' @import patchwork
 #' @importFrom purrr discard
 #'
 #' @examples
@@ -57,6 +57,7 @@ plot_alpha <- function(x, nburn, thinning, ...) {
   summary.clusters_complete <- NULL
   postComp_complete <- NULL
   postAlpha_complete <- NULL
+  postLogDens_complete <- NULL
   
   #:---------------------------------------------------------------
   ## Iterate through all chains
@@ -123,7 +124,15 @@ plot_alpha <- function(x, nburn, thinning, ...) {
     
     postAlpha_complete <- rbind(postAlpha_complete, postAlpha)
     
-      
+    
+    #:---------------------------------------------------------------
+    ## Plot D - Alpha values
+    postLogDens <- samples %>%
+      select("logDens") %>%
+      mutate(Iteration = rep(1:nrow(samples), 1)) %>%
+      cbind(Chain = rep(title_chain, nrow(samples)))
+    
+    postLogDens_complete <- rbind(postLogDens_complete, postLogDens)
   }
   
   #:---------------------------------------------------------------
@@ -137,58 +146,59 @@ plot_alpha <- function(x, nburn, thinning, ...) {
   postAlpha_complete <- postAlpha_complete %>%
     mutate(Chain = factor(Chain))
   
+  postLogDens_complete <- postLogDens_complete %>%
+    mutate(Chain = factor(Chain))
+  
   
   #:---------------------------------------------------------------
   ## Plot
-  plot <- plot_grid(
+  plot_postComp_complete <- postComp_complete %>%
+    ggplot() +
+    geom_vline(xintercept = nburn, colour = "black", linetype = "dashed") +
+    geom_path(aes(x = Iteration, y = `.`, colour = Chain), linewidth = 0.4, alpha = 0.7) +
+    theme_bw() +
+    scale_y_continuous(breaks = seq(1,200, by =1)) +
+    labs(title = "Number of Components",
+         x = "Iterations",
+         y = "Components") +
+    theme(legend.position = "none")
+  
+  plot_summary.clusters_complete <- summary.clusters_complete %>%
+    ggplot() +
+    geom_col(aes(x = key, y = value, colour = Chain, fill = Chain), linewidth = 0.2, position = "dodge2") +
+    theme_bw() +
+    labs(title = "Average Number of Individuals for Ranked Components",
+         x = "Component Ranking",
+         y = "Individuals") +
+    theme(legend.position = "none")
+  
+  plot_postAlpha_complete <- postAlpha_complete %>%
+    ggplot() +
+    geom_vline(xintercept = nburn, colour = "black", linetype = "dashed") +
+    geom_line(aes(x = Iteration, y = alpha, colour = Chain), alpha = 0.7) +
+    theme_bw() +
+    labs(title = " Alpha values",
+         x = "Iterations") +
+    theme(axis.title.y = element_blank()) +
+    theme(legend.position = "none")
+  
+  plot_postLogDens_complete <- postLogDens_complete %>%
+    ggplot() +
+    geom_vline(xintercept = nburn, colour = "black", linetype = "dashed") +
+    geom_line(aes(x = Iteration, y = logDens, colour = Chain), alpha = 0.7) +
+    theme_bw() +
+    labs(title = "Log probability density values",
+         x = "Iterations") +
+    theme(axis.title.y = element_blank()) +
+    theme(legend.position = "none")
+  
+  
+  plot <- plot_postComp_complete + plot_summary.clusters_complete + plot_postAlpha_complete + plot_postLogDens_complete +
+    plot_layout(nrow = 3, heights = c(1, 0.5, 0.5), design = "AABBBB
+                                                              CCCCCC
+                                                              DDDDDD") +
+    plot_annotation(tag_levels = "A")
     
-    plot_grid(
-      
-      postComp_complete %>%
-        ggplot() +
-        geom_vline(xintercept = nburn, colour = "black", linetype = "dashed") +
-        geom_path(aes(x = Iteration, y = `.`, colour = Chain), linewidth = 0.4, alpha = 0.7) +
-        theme_bw() +
-        scale_y_continuous(breaks = seq(1,200, by =1)) +
-        labs(title = "Number of Components",
-             x = "Iterations",
-             y = "Components") +
-        theme(legend.position = "none")
-      
-      ,
-      
-      summary.clusters_complete %>%
-        ggplot() +
-        geom_col(aes(x = key, y = value, colour = Chain, fill = Chain), linewidth = 0.2, position = "dodge2") +
-        theme_bw() +
-        labs(title = "Average Number of Individuals for Ranked Components",
-             x = "Component Ranking",
-             y = "Individuals") +
-        theme(legend.position = "none")
-      ,
-      
-      ncol = 2, rel_widths = c(15,28), labels = c("A","B")
-      
-      
-    )
-    
-    ,
-    
-    postAlpha_complete %>%
-      ggplot() +
-      geom_vline(xintercept = nburn, colour = "black", linetype = "dashed") +
-      geom_line(aes(x = Iteration, y = alpha, colour = Chain), alpha = 0.7) +
-      theme_bw() +
-      labs(title = "Alpha values",
-           x = "Iterations") +
-      theme(axis.title.y = element_blank()) +
-      theme(legend.position = "none")
-    ,
-    
-    ncol = 1, nrow = 2, rel_heights = c(23,16), labels = c("","C")
-    
-    
-  )
   
   return(plot)
 }
