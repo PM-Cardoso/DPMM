@@ -4,7 +4,7 @@
 \alias{plot_alpha}
 \title{Diagnostic Plot}
 \usage{
-plot_alpha(x, nburn, thinning, ...)
+plot_alpha(x, nburn, thinning, clip_logdens = FALSE, ...)
 }
 \arguments{
 \item{x}{object class 'dpmm_fit'.}
@@ -12,6 +12,8 @@ plot_alpha(x, nburn, thinning, ...)
 \item{nburn}{Iterations to be discarded in the plot of component rankings}
 
 \item{thinning}{Iterations}
+
+\item{clip_logdens}{Remove log-probability density values during burn-in ('nburn')}
 
 \item{...}{other parameters used by ggplot2.}
 }

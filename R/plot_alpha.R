@@ -5,6 +5,7 @@
 #' @param x object class 'dpmm_fit'.
 #' @param nburn Iterations to be discarded in the plot of component rankings
 #' @param thinning Iterations 
+#' @param clip_logdens Remove log-probability density values during burn-in ('nburn')
 #' @param ... other parameters used by ggplot2.
 #'
 #' @return A 'ggplot' panel plot.
@@ -31,7 +32,7 @@
 #'
 #'
 #' @export
-plot_alpha <- function(x, nburn, thinning, ...) {
+plot_alpha <- function(x, nburn, thinning, clip_logdens = FALSE, ...) {
   
   #:---------------------------------------------------------------
   ## Check before running function
@@ -51,6 +52,8 @@ plot_alpha <- function(x, nburn, thinning, ...) {
       stop("'thinning' must be numeric")
     }
   }
+  
+  if(!(clip_logdens %in% c(FALSE, TRUE))) {stop("'clip_logdens' needs to be FALSE or TRUE")}
   
   #:---------------------------------------------------------------
   ## Generate objects that will contain the information for plots
@@ -148,6 +151,11 @@ plot_alpha <- function(x, nburn, thinning, ...) {
   
   postLogDens_complete <- postLogDens_complete %>%
     mutate(Chain = factor(Chain))
+  
+  if (clip_logdens == TRUE) {
+    postLogDens_complete <- postLogDens_complete %>%
+      filter(Iteration >= nburn)
+  }
   
   
   #:---------------------------------------------------------------
