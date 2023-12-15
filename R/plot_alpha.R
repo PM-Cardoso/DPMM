@@ -150,7 +150,8 @@ plot_alpha <- function(x, nburn, thinning, clip_logdens = FALSE, ...) {
     mutate(Chain = factor(Chain))
   
   postLogDens_complete <- postLogDens_complete %>%
-    mutate(Chain = factor(Chain))
+    mutate(Chain = factor(Chain)) %>%
+    filter(logDens != "Inf")
   
   if (clip_logdens == TRUE) {
     postLogDens_complete <- postLogDens_complete %>%
