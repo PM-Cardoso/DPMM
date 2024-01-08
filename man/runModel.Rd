@@ -7,6 +7,7 @@
 runModel(
   dataset,
   mcmc_iterations = 2500,
+  thinning = 1,
   L = 10,
   mcmc_chains = 2,
   standardise = TRUE
@@ -16,6 +17,8 @@ runModel(
 \item{dataset}{dataframe with continuous and/or categorical variables.}
 
 \item{mcmc_iterations}{Number of MCMC iterations.}
+
+\item{thinning}{Interval for collecting MCMC samples.}
 
 \item{L}{Number of DPMM components fitted.}
 

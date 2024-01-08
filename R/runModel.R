@@ -4,6 +4,7 @@
 #'
 #' @param dataset dataframe with continuous and/or categorical variables.
 #' @param mcmc_iterations Number of MCMC iterations.
+#' @param thinning Interval for collecting MCMC samples.
 #' @param L Number of DPMM components fitted.
 #' @param mcmc_chains Number of MCMC chains fitted.
 #' @param standardise Should continuous variables be standardised. default = TRUE
@@ -57,7 +58,7 @@
 #' 
 #' 
 #' @export
-runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, standardise = TRUE) {
+runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc_chains = 2, standardise = TRUE) {
   
   #:-------------------------------------------------------------------
   ## check inputs
@@ -65,6 +66,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
   if(L < 3) stop("'L' has to be 3 or more")
   if(!is.data.frame(dataset)) stop("'dataset' must be 'data.frame'")
   if(!is.numeric(mcmc_iterations)) stop("'mcmc_iterations' must be 'numeric'")
+  if(!is.numeric(thinning)) stop("'thinning' must be 'numeric'")
   if(!is.logical(standardise)) stop("'standardise' must be 'logical'")
 
   #:-------------------------------------------------------------------
@@ -1516,11 +1518,11 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
   run <- runMCMC(cbuilt,
                  niter = mcmc_iterations,
                  nburnin = 0,
+                 thin = thinning,
                  nchains = mcmc_chains,
                  progressBar = TRUE,
                  summary = FALSE,
-                 samplesAsCodaMCMC = TRUE,
-                 thin = 1)
+                 samplesAsCodaMCMC = TRUE)
 
   # collect samples
   samples <- run
@@ -1528,12 +1530,12 @@ runModel <- function(dataset, mcmc_iterations = 2500, L = 10, mcmc_chains = 2, s
   # create output
   if (standardise == TRUE) {
     if (ncol(continuous) != 0) {
-      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
+      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
     } else {
-      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
+      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise)
     }
   } else {
-    output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, samples = samples, standardise = standardise)
+    output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise)
   }
 
   class(output) <- "dpmm_fit"
