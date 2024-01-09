@@ -4,7 +4,15 @@
 \alias{plot_ggpairs}
 \title{Pairs Plot}
 \usage{
-plot_ggpairs(x, newdata, iterations, nburn, ggpairs_title = "", ...)
+plot_ggpairs(
+  x,
+  newdata,
+  iterations,
+  nburn,
+  compare_chains = FALSE,
+  ggpairs_title = "",
+  ...
+)
 }
 \arguments{
 \item{x}{object class 'dpmm_fit'.}
@@ -40,6 +48,9 @@ posteriors <- runModel(dataset_1,
                               
 ## pairs plot of random draws from the DPMM posterior
 plot_ggpairs(posteriors, iterations = seq(500,1500,1))
+
+## pairs plot of random draws from different chains in the DPMM posterior
+plot_ggpairs(posteriors, iterations = seq(500,1500,1), compare_chains = TRUE)
 
 ## pairs plot comparing the original dataset against random draws from the DPMM posterior
 plot_ggpairs(posteriors, dataset_1, nburn = 500)

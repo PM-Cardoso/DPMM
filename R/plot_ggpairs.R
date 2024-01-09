@@ -32,13 +32,16 @@
 #' ## pairs plot of random draws from the DPMM posterior
 #' plot_ggpairs(posteriors, iterations = seq(500,1500,1))
 #' 
+#' ## pairs plot of random draws from different chains in the DPMM posterior
+#' plot_ggpairs(posteriors, iterations = seq(500,1500,1), compare_chains = TRUE)
+#' 
 #' ## pairs plot comparing the original dataset against random draws from the DPMM posterior
 #' plot_ggpairs(posteriors, dataset_1, nburn = 500)
 #' }
 #' 
 #' 
 #' @export
-plot_ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) {
+plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, ggpairs_title = "",...) {
   
   #:------------------------------------------------------------
   # Pre-Checks
@@ -53,8 +56,11 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
   if (!missing(newdata) && !missing(iterations)) stop("'newdata' can only be used with 'nburn'")
   if (!missing(newdata) && missing(nburn)) stop("'nburn' is required when supplying 'newdata'")
   if (!inherits(x, "dpmm_fit")) stop("'x' must be class 'dpmm_fit'")
-  
   if (missing(x))  {stop("'x' needs to be supplied")}
+  if (!(compare_chains %in% c(TRUE, FALSE))) stop("'compare_chains' must be either TRUE or FALSE")
+  if (!missing(newdata)) {
+    if (compare_chains == TRUE) stop("Cannot compare chains when newdata is provided.")
+  }
     
   #:-----------------------------------------------------
   ## check which variables are categorical in order to be formatted properly in the plot
@@ -264,30 +270,58 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, ggpairs_title = "",...) 
     #:-----------------------------------------------------
     ## Set up the plot
     
-    combination <- posteriors_plot %>%
-      mutate(Data = factor(Data))
-    
-    
-    my_dens_lower <- function(data, mapping, ...) {
-      ggplot(mapping=mapping) +
-        geom_density2d(data = filter(data, Data == "DPMM"), linewidth = 1.2, alpha = 0.7, colour = '#F8766D')
+    if (compare_chains == TRUE) {
+      combination <- posteriors_plot %>%
+        mutate(Chain = factor(rep(paste("Chain", seq(1, x$mcmc_chains, 1)), each = length(iterations))))
+      
+      my_dens_lower <- function(data, mapping, ...) {
+        ggplot(mapping=mapping) +
+          geom_density2d(data = data, aes(colour = Chain), linewidth = 1.2, alpha = 0.7)
+      }
+      
+      my_dens_diagonal <- function(data, mapping, ...) {
+        ggplot(data = data, mapping=mapping) +
+          geom_density(aes(fill = Chain), alpha = 0.3)
+      }
+      
+      ggpairs(combination, columns = 1:(ncol(combination)-2),
+              aes(color = Chain),
+              showStrips = TRUE,
+              lower = list(continuous = my_dens_lower, discrete = wrap(ggally_facetbar, position = "dodge"), combo = wrap(ggally_facetdensity,alpha=0.7)),
+              diag = list(continuous = my_dens_diagonal, discrete = wrap(ggally_barDiag, position = "dodge")),
+              upper = NULL,
+              title = ggpairs_title) +
+        theme(panel.border = element_rect(fill = NA),
+              panel.grid.major = element_blank())
+      
+      
+    } else {
+      combination <- posteriors_plot %>%
+        mutate(Data = factor(Data))
+      
+      my_dens_lower <- function(data, mapping, ...) {
+        ggplot(mapping=mapping) +
+          geom_density2d(data = filter(data, Data == "DPMM"), linewidth = 1.2, alpha = 0.7, colour = '#F8766D')
+      }
+      
+      my_dens_diagonal <- function(data, mapping, ...) {
+        ggplot(data = data, mapping=mapping) +
+          geom_density(aes(fill = Data), alpha = 0.3)
+      }
+      
+      
+      ggpairs(combination, columns = 1:(ncol(combination)-1),
+              aes(color = Data),
+              showStrips = TRUE,
+              lower = list(continuous = my_dens_lower, discrete = wrap(ggally_facetbar, position = "dodge"), combo = wrap(ggally_facetdensity,alpha=0.7)),
+              diag = list(continuous = my_dens_diagonal, discrete = wrap(ggally_barDiag, position = "dodge")),
+              upper = NULL,
+              title = ggpairs_title) +
+        theme(panel.border = element_rect(fill = NA),
+              panel.grid.major = element_blank())
+      
     }
     
-    my_dens_diagonal <- function(data, mapping, ...) {
-      ggplot(data = data, mapping=mapping) +
-        geom_density(aes(fill = Data), alpha = 0.3)
-    }
-    
-    
-    ggpairs(combination, columns = 1:(ncol(combination)-1),
-            aes(color = Data),
-            showStrips = TRUE,
-            lower = list(continuous = my_dens_lower, discrete = wrap(ggally_facetbar, position = "dodge"), combo = wrap(ggally_facetdensity,alpha=0.7)),
-            diag = list(continuous = my_dens_diagonal, discrete = wrap(ggally_barDiag, position = "dodge")),
-            upper = NULL,
-            title = ggpairs_title) +
-      theme(panel.border = element_rect(fill = NA),
-            panel.grid.major = element_blank())
     
     
   }
