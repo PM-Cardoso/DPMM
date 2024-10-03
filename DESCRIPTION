@@ -1,7 +1,7 @@
 Package: DPMM
 Type: Package
 Title: Dirichlet Process Mixture Model
-Version: 1.1.5
+Version: 1.1.6
 Authors@R: c(person("Pedro", "Cardoso", role = c("aut", "cre"), email = "p.cardoso@exeter.ac.uk"),
              person("TJ", "McKinley", role = "aut"))
 Maintainer: Pedro Cardoso <p.cardoso@exeter.ac.uk>
@@ -31,8 +31,7 @@ Imports:
     GGally,
     patchwork,
 Depends:
-    nimble,
-    tidyverse
+    nimble
 RoxygenNote: 7.2.3
 Suggests: 
     knitr,
