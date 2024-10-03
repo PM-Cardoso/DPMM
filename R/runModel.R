@@ -36,6 +36,7 @@
 #' @import nimble
 #' @import abind
 #' @import synthpop
+#' @import tidyverse
 #' @importFrom tidyselect where
 #' @importFrom rlang is_empty
 #' @importFrom purrr map

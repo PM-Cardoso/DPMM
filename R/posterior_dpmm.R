@@ -90,7 +90,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
     #:----------------------------------------------------------
     ## Extract components weights
     postW <- samples_chain %>%
-      as_tibble() %>%
+      as_tibble(.name_repair = 'unique') %>%
       select(starts_with("v[")) %>%
       apply(1, function(v) {
         w <- numeric(length(v) + 1)
@@ -102,7 +102,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         w
       }) %>%
       t() %>%
-      as_tibble() %>%
+      as_tibble(.name_repair = 'unique') %>%
       mutate(iter = 1:n()) %>%
       gather(var, value, -iter) %>%
       mutate(var = as.numeric(gsub("V", "", var))) %>%
@@ -117,7 +117,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
     if (!is.null(cont_vars)) {
       ### Extract posterior samples of component means
       postMu <- samples_chain %>%
-        as_tibble() %>%
+        as_tibble(.name_repair = 'unique') %>%
         select(starts_with("muL")) %>%
         mutate(iter = 1:n()) %>%
         gather(var, value, -iter) %>%
@@ -139,7 +139,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         rename(muL = data)
       ### Extract posterior samples of component precision matrices
       postTau <- samples_chain %>%
-        as_tibble() %>%
+        as_tibble(.name_repair = 'unique') %>%
         select(starts_with("tauL")) %>%
         mutate(iter = 1:n()) %>%
         gather(var, value, -iter) %>%
@@ -168,7 +168,7 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
     if (!is.null(cat_vars)) {
       ### Extract posterior samples of component level probabilities
       postPhi <- samples_chain %>%
-        as_tibble() %>%
+        as_tibble(.name_repair = 'unique') %>%
         select(starts_with("phiL")) %>%
         mutate(iter = 1:n()) %>%
         gather(var, value, -iter) %>%

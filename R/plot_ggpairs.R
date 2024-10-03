@@ -224,7 +224,6 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
             lower = list(continuous = my_dens_lower, discrete = wrap(ggally_facetbar, position = "dodge"), combo = wrap(ggally_facetdensity,alpha=0.7)),
             diag = list(continuous = my_dens_diagonal, discrete = wrap(ggally_barDiag, position = "dodge")),
             upper = NULL,
-            legend = 1,
             title = ggpairs_title) +
       theme(legend.position = 'bottom',
             panel.border = element_rect(fill = NA),
