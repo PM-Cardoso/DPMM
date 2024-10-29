@@ -36,8 +36,7 @@
 #' @import nimble
 #' @import abind
 #' @import synthpop
-#' @import tidyselect
-#' @importFrom tidyselect where
+#' @importFrom tidyselect vars_select_helpers
 #' @importFrom rlang is_empty
 #' @importFrom purrr map
 #' @importFrom MASS mvrnorm
@@ -72,8 +71,8 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
 
   #:-------------------------------------------------------------------
   ## check which columns are continuous or categorical
-  continuous <- dplyr::select(dataset, where(is.numeric))
-  discrete <- dplyr::select(dataset, where(Negate(is.numeric)))
+  continuous <- dplyr::select(dataset, tidyselect::vars_select_helpers$where(is.numeric))
+  discrete <- dplyr::select(dataset, tidyselect::vars_select_helpers$where(Negate(is.numeric)))
   dataset <- cbind(continuous, discrete)
   
   #:-------------------------------------------------------------------
@@ -88,7 +87,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
         as.data.frame() %>%
         t()
       colnames(sd_values) <- colnames(continuous)
-      continuous <- dplyr::select(dataset, where(is.numeric)) %>%
+      continuous <- dplyr::select(dataset, tidyselect::vars_select_helpers$where(is.numeric)) %>%
         apply(2, function(x) (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE))
     }
   }
