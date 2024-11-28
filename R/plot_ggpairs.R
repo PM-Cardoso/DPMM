@@ -166,10 +166,11 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
     if (ncol(discrete) != 0) {
       for (i in 1:ncol(discrete)) {
         posteriors[[1]][,colnames(discrete)[i]] <- factor(posteriors[[1]][,colnames(discrete)[i]] , 
-                                                          levels = 1:length(unique(posteriors[[1]][,colnames(discrete)[i]])),
+                                                          levels = 1:length(levels(discrete[,colnames(discrete)[i]])),
                                                           labels = levels(discrete[,i]))
       }
     }
+    
     
     newdata_plot <- cbind(newdata, Data = "Original")
     
@@ -234,12 +235,10 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
     if (ncol(discrete) != 0) {
       for (i in 1:ncol(discrete)) {
         posteriors[[1]][,colnames(discrete)[i]] <- factor(posteriors[[1]][,colnames(discrete)[i]] , 
-                                                          levels = 1:length(unique(posteriors[[1]][,colnames(discrete)[i]])),
+                                                          levels = 1:length(levels(discrete[,colnames(discrete)[i]])),
                                                           labels = levels(discrete[,i]))
       }
     }
-    
-    
     
     posteriors_plot <- cbind(posteriors[[1]], Data = "DPMM")
     
