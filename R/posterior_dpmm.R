@@ -14,10 +14,12 @@
 #'
 #' @import condMVNorm
 #' @import mvtnorm
+#' @import abind
 #' @importFrom tidyr gather
 #' @importFrom tidyr nest
 #' @importFrom tidyr separate
 #' @importFrom tidyr unnest
+#' @importFrom tidyr pivot_longer
 #' @importFrom purrr pmap
 #' @importFrom purrr map
 #' @importFrom purrr map_dbl
@@ -86,110 +88,104 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
       samples_chain <- samples[[mcmc_chains]]
     }
     
-    
     #:----------------------------------------------------------
     ## Extract components weights
-    postW <- samples_chain %>%
+    v_mat <- samples_chain %>%
       as_tibble(.name_repair = 'unique') %>%
       select(starts_with("v[")) %>%
-      apply(1, function(v) {
-        w <- numeric(length(v) + 1)
-        w[1] <- v[1]
-        for(i in 2:length(v)) {
-          w[i] <- v[i] * prod(1 - v[1:(i - 1)])
-        }
-        w[length(w)] <- prod(1 - v)
-        w
-      }) %>%
-      t() %>%
-      as_tibble(.name_repair = 'unique') %>%
-      mutate(iter = 1:n()) %>%
-      gather(var, value, -iter) %>%
-      mutate(var = as.numeric(gsub("V", "", var))) %>%
+      as.matrix()
+    
+    stick_breaking <- function(v) {
+      K <- ncol(v)
+      N <- nrow(v)
+      w <- matrix(0, nrow = N, ncol = K + 1)
+      cumprod_1mv <- matrix(1, nrow = N, ncol = K)
+      
+      for (k in 2:K) {
+        cumprod_1mv[, k] <- cumprod_1mv[, k - 1] * (1 - v[, k - 1])
+      }
+      w[, 1:K] <- v * cumprod_1mv
+      w[, K + 1] <- apply(1 - v, 1, prod)
+      return(w)
+    }
+    
+    postW <- stick_breaking(v_mat) %>%
+      as_tibble(.name_repair = "unique") %>%
+      mutate(iter = row_number()) %>%
+      tidyr::pivot_longer(-iter, names_to = "var", values_to = "value") %>%
+      mutate(var = as.integer(gsub("V", "", var))) %>%
       arrange(iter, var) %>%
       group_by(iter) %>%
-      nest() %>%
-      mutate(data = map(data, "value")) %>%
-      rename(w = data)
+      summarise(w = list(value), .groups = "drop")
     
     #:----------------------------------------------------------
     ## If cont_vars is provided (and hence the model is fitted to continuous variables)
     if (!is.null(cont_vars)) {
       ### Extract posterior samples of component means
-      postMu <- samples_chain %>%
-        as_tibble(.name_repair = 'unique') %>%
-        select(starts_with("muL")) %>%
-        mutate(iter = 1:n()) %>%
-        gather(var, value, -iter) %>%
-        mutate(var = gsub(" |muL\\[|\\]", "", var)) %>%
-        separate(var, c("component", "dim"), sep = ",") %>%
-        mutate_at(vars(c("component", "dim")), as.numeric) %>%
+      mu_cols <- samples_chain %>%
+        as_tibble(.name_repair = "unique") %>%
+        select(starts_with("muL[")) %>%
+        as.matrix()
+      
+      n_iter <- nrow(mu_cols)
+      n_param <- ncol(mu_cols)
+      
+      postMu <- tibble(value = as.vector(mu_cols),
+                       iter = rep(1:n_iter, times = n_param),
+                       var = rep(colnames(mu_cols), each = n_iter)) %>%
+        mutate(var = gsub("muL\\[|\\]", "", var)) %>%
+        separate(var, c("component", "dim"), sep = ",", convert = TRUE) %>%
         arrange(iter, component, dim) %>%
-        select(-dim) %>%
         group_by(iter, component) %>%
-        nest() %>%
-        mutate(data = map(data, "value")) %>%
+        summarise(mu = list(value), .groups = "drop") %>%
         group_by(iter) %>%
-        nest() %>%
-        mutate(data = map(data, ~{
-          pluck(., "data") %>%
-            abind(along = 2) %>%
-            t()
-        })) %>%
-        rename(muL = data)
+        summarise(muL = list(t(simplify2array(mu))), .groups = "drop")
+      
       ### Extract posterior samples of component precision matrices
-      postTau <- samples_chain %>%
-        as_tibble(.name_repair = 'unique') %>%
-        select(starts_with("tauL")) %>%
-        mutate(iter = 1:n()) %>%
-        gather(var, value, -iter) %>%
-        mutate(var = gsub(" |tauL\\[|\\]", "", var)) %>%
-        separate(var, c("dim1", "dim2", "component"), sep = ",") %>%
-        mutate_at(vars(c("dim1", "dim2", "component")), as.numeric) %>%
+      tau_cols <- samples_chain %>%
+        as_tibble(.name_repair = "unique") %>%
+        select(starts_with("tauL[")) %>%
+        as.matrix()
+      
+      n_iter <- nrow(tau_cols)
+      n_param <- ncol(tau_cols)
+      
+      postTau <- tibble(value = as.vector(tau_cols),
+                        iter = rep(1:n_iter, times = n_param),
+                        var = rep(colnames(tau_cols), each = n_iter)) %>%
+        mutate(var = gsub("tauL\\[|\\]", "", var)) %>%
+        separate(var, c("dim1", "dim2", "component"), sep = ",", convert = TRUE) %>%
         arrange(iter, component, dim2, dim1) %>%
-        select(-dim1, -dim2) %>%
         group_by(iter, component) %>%
-        nest() %>%
-        mutate(data = map(data, "value")) %>%
-        mutate(data = map(data, ~{
-          matrix(., sqrt(length(.)), sqrt(length(.)))
-        })) %>%
+        summarise(tau = list(matrix(value, nrow = max(dim1), ncol = max(dim2), byrow = TRUE)), .groups = "drop") %>%
         group_by(iter) %>%
-        nest() %>%
-        mutate(data = map(data, ~{
-          pluck(., "data") %>%
-            abind(along = 3)
-        })) %>%
-        rename(tauL = data) 
+        summarise(tauL = list(abind(tau, along = 3)), .groups = "drop")
+      
     }
     
     #:----------------------------------------------------------
     ## If cat_vars is provided (and hence the model is fitted to categorical variables)
     if (!is.null(cat_vars)) {
       ### Extract posterior samples of component level probabilities
-      postPhi <- samples_chain %>%
-        as_tibble(.name_repair = 'unique') %>%
-        select(starts_with("phiL")) %>%
-        mutate(iter = 1:n()) %>%
-        gather(var, value, -iter) %>%
-        mutate(var = gsub(" |phiL\\[|\\]", "", var)) %>%
-        separate(var, c("dim1", "dim2", "component"), sep = ",") %>%
-        mutate_at(vars(c("dim1", "dim2","component")), as.numeric) %>%
+      phi_cols <- samples_chain %>%
+        as_tibble(.name_repair = "unique") %>%
+        select(starts_with("phiL[")) %>%
+        as.matrix()
+      
+      n_iter <- nrow(phi_cols)
+      n_param <- ncol(phi_cols)
+      
+      postPhi <- tibble(value = as.vector(phi_cols),
+                        iter = rep(1:n_iter, times = n_param),
+                        var = rep(colnames(phi_cols), each = n_iter)) %>%
+        mutate(var = gsub("phiL\\[|\\]", "", var)) %>%
+        separate(var, c("dim1", "dim2", "component"), sep = ",", convert = TRUE) %>%
         arrange(iter, component, dim1, dim2) %>%
-        select(-dim1, -dim2) %>%
         group_by(iter, component) %>%
-        nest() %>%
-        mutate(data = map(data, "value")) %>%
-        mutate(data = map(data, ~{
-          matrix(., nrow = ndisc, ncol = ndiscdim, byrow = TRUE)
-        })) %>%
+        summarise(phi = list(matrix(value, nrow = ndisc, ncol = ndiscdim, byrow = TRUE)), .groups = "drop") %>%
         group_by(iter) %>%
-        nest() %>%
-        mutate(data = map(data, ~{
-          pluck(., "data") %>%
-            abind(along = 3)
-        })) %>%
-        rename(phiL = data)
+        summarise(phiL = list(abind(phi, along = 3)), .groups = "drop")
+      
     }
     
     #:----------------------------------------------------------
