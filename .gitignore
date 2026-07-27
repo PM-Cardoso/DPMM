@@ -4,3 +4,6 @@
 .Ruserdata
 /doc/
 /Meta/
+
+# pkgdown site (built and deployed by GitHub Actions)
+docs/
