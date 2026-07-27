@@ -10,7 +10,8 @@ runModel(
   thinning = 1,
   L = 10,
   mcmc_chains = 2,
-  standardise = TRUE
+  standardise = TRUE,
+  seed = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ runModel(
 \item{mcmc_chains}{Number of MCMC chains fitted.}
 
 \item{standardise}{Should continuous variables be standardised. default = TRUE}
+
+\item{seed}{specify seed to be used for reproducibility. (default = NULL)}
 }
 \value{
 \subsection{Output: List of class 'dpmm_fit'}{
@@ -48,11 +51,12 @@ This function fits the Dirichlet Process Mixture Model (DPMM).
 data(dataset_1)
 
 ## fit model
-posteriors <- runModel(dataset_1, 
+posteriors <- runModel(dataset_1,
                        mcmc_iterations = 100,
-                       L = 6, 
-                       mcmc_chains = 2, 
-                       standardise = TRUE)
+                       L = 6,
+                       mcmc_chains = 2,
+                       standardise = TRUE,
+                       seed = 1)
 }
 
 

@@ -4,7 +4,13 @@
 \alias{predict_dpmm_fit}
 \title{Predict from DPMM}
 \usage{
-predict_dpmm_fit(object, newdata, samples = seq(1000, 2500, 100), ...)
+predict_dpmm_fit(
+  object,
+  newdata,
+  samples = seq(1000, 2500, 100),
+  seed = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{object class 'dpmm_fit'}
@@ -12,6 +18,8 @@ predict_dpmm_fit(object, newdata, samples = seq(1000, 2500, 100), ...)
 \item{newdata}{dataframe with missingness}
 
 \item{samples}{vector of iterations to be used in the posterior}
+
+\item{seed}{specify seed to be used for reproducibility. (default = NULL)}
 
 \item{...}{other parameters used in 'posterior.dpmm'}
 }
@@ -40,9 +48,10 @@ dataset_missing_predict <- dataset_missing[rows,]
 dataset_missing_predict[,1] <- as.numeric(NA)
 
 # predict missing values
-posteriors.dpmmfit <- predict_dpmm_fit(posteriors, 
-                                       dataset_missing_predict, 
-                                       samples = c(1:100))
+posteriors.dpmmfit <- predict_dpmm_fit(posteriors,
+                                       dataset_missing_predict,
+                                       samples = c(1:100),
+                                       seed = 1)
 }
                         
 

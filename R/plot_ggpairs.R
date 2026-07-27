@@ -7,6 +7,7 @@
 #' @param iterations vector of iterations to be used in the posterior samples (if newdata is provided, this parameter is not used and the iterations are chosen to match the number of rows in newdata)
 #' @param nburn number of iterations to discard as burn-in when newdata is provided.
 #' @param ggpairs_title title of the pairs plot.
+#' @param seed specify seed to be used for reproducibility. (default = NULL)
 #' @param ... other parameters used in GGally::ggpairs.
 #'
 #' @return A pairs plot.
@@ -22,29 +23,31 @@
 #' data(dataset_1)
 #' 
 #' ## fit model
-#' posteriors <- runModel(dataset_1, 
+#' posteriors <- runModel(dataset_1,
 #'                        mcmc_iterations = 1500,
-#'                        L = 6, 
-#'                        mcmc_chains = 2, 
-#'                        standardise = TRUE)
-#'                
-#'                               
+#'                        L = 6,
+#'                        mcmc_chains = 2,
+#'                        standardise = TRUE,
+#'                        seed = 1)
+#'
+#'
 #' ## pairs plot of random draws from the DPMM posterior
-#' plot_ggpairs(posteriors, iterations = seq(500,1500,1))
-#' 
+#' plot_ggpairs(posteriors, iterations = seq(500,1500,1), seed = 1)
+#'
 #' ## pairs plot of random draws from different chains in the DPMM posterior
-#' plot_ggpairs(posteriors, iterations = seq(500,1500,1), compare_chains = TRUE)
-#' 
+#' plot_ggpairs(posteriors, iterations = seq(500,1500,1), compare_chains = TRUE, seed = 1)
+#'
 #' ## pairs plot comparing the original dataset against random draws from the DPMM posterior
-#' plot_ggpairs(posteriors, dataset_1, nburn = 500)
+#' plot_ggpairs(posteriors, dataset_1, nburn = 500, seed = 1)
 #' }
 #' 
 #' 
 #' @export
-plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, ggpairs_title = "",...) {
-  
+plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, ggpairs_title = "", seed = NULL, ...) {
+
   #:------------------------------------------------------------
   # Pre-Checks
+  if (!is.null(seed) && !is.numeric(seed)) stop("'seed' must be 'numeric' or NULL")
   if (missing(iterations) && missing(nburn)) stop("'nburn' or 'iterations' must be provided")
   if (!missing(iterations) && !missing(nburn)) stop("'nburn' or 'iterations' cannot be used at same time")
   if (!missing(iterations)) {
@@ -143,8 +146,14 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
     
 
   class(object) <- "ggpairs.fit"
-  
-  
+
+
+  #:-----------------------------------------------------
+  ## check whether seed is provided
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+
   #:-----------------------------------------------------
   ## perform MCMC predictive draws
   if (!missing(nburn)) {

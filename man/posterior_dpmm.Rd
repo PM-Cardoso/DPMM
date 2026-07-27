@@ -38,12 +38,13 @@ Sample missing values from the fitted DPMM
 data(dataset_1)
 
 ## fit model
-posteriors <- runModel(dataset_1, 
+posteriors <- runModel(dataset_1,
                        mcmc_iterations = 100,
-                       L = 6, 
-                       mcmc_chains = 2, 
-                       standardise = TRUE)
-                       
+                       L = 6,
+                       mcmc_chains = 2,
+                       standardise = TRUE,
+                       seed = 1)
+
 ## introduce missing data
 rows <- 501:550
 dataset_missing <- dataset_1
@@ -51,9 +52,10 @@ dataset_missing_predict <- dataset_missing[rows,]
 dataset_missing_predict[,1] <- as.numeric(NA)
 
 # predict missing values
-posteriors.dpmmfit <- predict_dpmm_fit(posteriors, 
-                                       dataset_missing_predict, 
-                                       samples = c(1:100))
+posteriors.dpmmfit <- predict_dpmm_fit(posteriors,
+                                       dataset_missing_predict,
+                                       samples = c(1:100),
+                                       seed = 1)
 }
 
 

@@ -43,10 +43,11 @@ GGally::ggpairs(dataset_1)
 We can fit the DPMM to the complete dataset. The 'mcmc_iterations' represents how long the MCMC chain should run (longer is better), 'L' represents the number of clusters that should be fitted, 'mcmc_chain' represents the number of MCMC chains being fitted in this function and 'standardise' chooses whether the continuous values should be standardised.
 
 ```{r}
-posteriors <- runModel(dataset_1, 
-                       mcmc_iterations = 20000, 
-                       L = 10, 
-                       mcmc_chains = 4, 
+posteriors <- runModel(dataset_1,
+                       mcmc_iterations = 20000,
+                       L = 10,
+                       mcmc_chains = 4,
+                       seed = 20240101,
                        standardise = TRUE)
 ```
 
@@ -66,9 +67,10 @@ plot_alpha(posteriors, nburn = 10000, thinning = 1)
 We can also check the fit of the DPMM to ensure that random samples from the fitted DPMM are in the same covariate space as the original data.
 
 ```{r}
-plot_ggpairs(posteriors, 
-             newdata = dataset_1, 
-             nburn = 10000)
+plot_ggpairs(posteriors,
+             newdata = dataset_1,
+             nburn = 10000,
+             seed = 20240101)
 ```
 
 ### Predictions of missing values
@@ -85,9 +87,10 @@ dataset_missing_predict[,"X1"] <- as.numeric(NA)
 And make predictions from the fitted DPMM.
 
 ```{r}
-posteriors.prediction <- predict_dpmm_fit(posteriors, 
+posteriors.prediction <- predict_dpmm_fit(posteriors,
                                           newdata = dataset_missing_predict,
-                                          samples = seq(10000,20000, 100))
+                                          samples = seq(10000,20000, 100),
+                                          seed = 20240101)
 ```
 
 We can then check whether the values are being predicted in the right place. First, we calculate the credible intervals for each predicted value.
@@ -136,11 +139,12 @@ dataset_missing[501,"X1"] <- NA
 Then we fit the DPMM whilst standardising values.
 
 ```{r}
-posteriors <- runModel(dataset_missing, 
-                       mcmc_iterations = 20000, 
-                       L = 10, 
-                       mcmc_chains = 4, 
-                       standardise = TRUE)
+posteriors <- runModel(dataset_missing,
+                       mcmc_iterations = 20000,
+                       L = 10,
+                       mcmc_chains = 4,
+                       standardise = TRUE,
+                       seed = 20240101)
 ```
 
 
@@ -155,9 +159,10 @@ plot_alpha(posteriors, nburn = 10000, thinning = 1)
 Then comparing the DPMM against the original dataset.
 
 ```{r}
-plot_ggpairs(posteriors, 
-             newdata = dataset_1, 
-             nburn = 10000)
+plot_ggpairs(posteriors,
+             newdata = dataset_1,
+             nburn = 10000,
+             seed = 20240101)
 ```
 
 

@@ -11,6 +11,7 @@ plot_ggpairs(
   nburn,
   compare_chains = FALSE,
   ggpairs_title = "",
+  seed = NULL,
   ...
 )
 }
@@ -24,6 +25,8 @@ plot_ggpairs(
 \item{nburn}{number of iterations to discard as burn-in when newdata is provided.}
 
 \item{ggpairs_title}{title of the pairs plot.}
+
+\item{seed}{specify seed to be used for reproducibility. (default = NULL)}
 
 \item{...}{other parameters used in GGally::ggpairs.}
 }
@@ -39,21 +42,22 @@ Pairs plot of all variables sampled
 data(dataset_1)
 
 ## fit model
-posteriors <- runModel(dataset_1, 
+posteriors <- runModel(dataset_1,
                        mcmc_iterations = 1500,
-                       L = 6, 
-                       mcmc_chains = 2, 
-                       standardise = TRUE)
-               
-                              
+                       L = 6,
+                       mcmc_chains = 2,
+                       standardise = TRUE,
+                       seed = 1)
+
+
 ## pairs plot of random draws from the DPMM posterior
-plot_ggpairs(posteriors, iterations = seq(500,1500,1))
+plot_ggpairs(posteriors, iterations = seq(500,1500,1), seed = 1)
 
 ## pairs plot of random draws from different chains in the DPMM posterior
-plot_ggpairs(posteriors, iterations = seq(500,1500,1), compare_chains = TRUE)
+plot_ggpairs(posteriors, iterations = seq(500,1500,1), compare_chains = TRUE, seed = 1)
 
 ## pairs plot comparing the original dataset against random draws from the DPMM posterior
-plot_ggpairs(posteriors, dataset_1, nburn = 500)
+plot_ggpairs(posteriors, dataset_1, nburn = 500, seed = 1)
 }
 
 

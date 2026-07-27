@@ -5,6 +5,7 @@
 #' @param object object class 'dpmm_fit'
 #' @param newdata dataframe with missingness
 #' @param samples vector of iterations to be used in the posterior
+#' @param seed specify seed to be used for reproducibility. (default = NULL)
 #' @param ... other parameters used in 'posterior.dpmm'
 #'
 #' @return A list with n entries for n rows with missingness, each entry is a dataframe with the sampled missing values.
@@ -28,14 +29,15 @@
 #' dataset_missing_predict[,1] <- as.numeric(NA)
 #' 
 #' # predict missing values
-#' posteriors.dpmmfit <- predict_dpmm_fit(posteriors, 
-#'                                        dataset_missing_predict, 
-#'                                        samples = c(1:100))
+#' posteriors.dpmmfit <- predict_dpmm_fit(posteriors,
+#'                                        dataset_missing_predict,
+#'                                        samples = c(1:100),
+#'                                        seed = 1)
 #' }
 #'                         
 #'
 #' @export
-predict_dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...) {
+predict_dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), seed = NULL, ...) {
   
   ## check object is correct class
   if(!inherits(object, "dpmm_fit") && !inherits(object, "ggpairs.fit")) stop("'object' must be a 'dpmm_fit' or 'ggpairs.fit' object")
@@ -156,7 +158,7 @@ predict_dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), ...
   
   #:----------------------------------------------------------
   ## sample posterior predictive distributions for missing values
-  posterior <- posterior_dpmm(dataset_prediction, samples_object, seed = NULL, cont_vars = cont_vars, cat_vars = cat_vars, mcmc_chain = object$mcmc_chains)
+  posterior <- posterior_dpmm(dataset_prediction, samples_object, seed = seed, cont_vars = cont_vars, cat_vars = cat_vars, mcmc_chain = object$mcmc_chains)
   
   return(posterior)
   

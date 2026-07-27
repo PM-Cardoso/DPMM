@@ -8,6 +8,7 @@
 #' @param L Number of DPMM components fitted.
 #' @param mcmc_chains Number of MCMC chains fitted.
 #' @param standardise Should continuous variables be standardised. default = TRUE
+#' @param seed specify seed to be used for reproducibility. (default = NULL)
 #'
 #' @return
 #' \subsection{Output: List of class 'dpmm_fit'}{
@@ -35,7 +36,6 @@
 #' @importFrom stats var
 #' @import nimble
 #' @import abind
-#' @import synthpop
 #' @importFrom tidyselect where
 #' @importFrom rlang is_empty
 #' @importFrom purrr map
@@ -49,17 +49,18 @@
 #' data(dataset_1)
 #' 
 #' ## fit model
-#' posteriors <- runModel(dataset_1, 
+#' posteriors <- runModel(dataset_1,
 #'                        mcmc_iterations = 100,
-#'                        L = 6, 
-#'                        mcmc_chains = 2, 
-#'                        standardise = TRUE)
+#'                        L = 6,
+#'                        mcmc_chains = 2,
+#'                        standardise = TRUE,
+#'                        seed = 1)
 #' }
-#' 
-#' 
+#'
+#'
 #' @export
-runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc_chains = 2, standardise = TRUE) {
-  
+runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc_chains = 2, standardise = TRUE, seed = NULL) {
+
   #:-------------------------------------------------------------------
   ## check inputs
   if(!is.numeric(L)) stop("'L' must be 'numeric'")
@@ -68,7 +69,14 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
   if(!is.numeric(mcmc_iterations)) stop("'mcmc_iterations' must be 'numeric'")
   if(!is.numeric(thinning)) stop("'thinning' must be 'numeric'")
   if(!is.logical(standardise)) stop("'standardise' must be 'logical'")
-  
+  if(!is.null(seed) && !is.numeric(seed)) stop("'seed' must be 'numeric' or NULL")
+
+  #:-------------------------------------------------------------------
+  ## check whether seed is provided
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+
   #:-------------------------------------------------------------------
   ## check which columns are continuous or categorical
   continuous <- dplyr::select(dataset, where(is.numeric))
@@ -264,114 +272,39 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
         
         ## sample initial values
         initFn <- function(L, N, Nmiss, mu0, tau0, R0, kappa0, ndiscdim, x_cont_miss, x_disc_miss) {
-          
-          # DPMM clustering
-          alpha <- rgamma(1, shape = 2, rate = 1)
-          v <- rbeta(L - 1, 1, alpha)
-          w <- v[1]
-          for(i in 2:(L - 1)) {
-            w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-          }
-          w <- c(w, prod(1 - v))
-          z <- rcat(N, w)
-          zmiss <- rcat(Nmiss, w)
-          
-          # DPMM for continuous
-          R1 <- rWishart(1, kappa0, R0)[, , 1]
-          kappa1 <- kappa0 - 1
-          while(kappa1 < kappa0) {
-            kappa1 <- rexp(1, 0.1)
-          }
-          muL <- mvrnorm(L, mu0, tau0)
-          tauL <- rWishart(L, kappa1, R1)
-          
-          # DPMM discrete
-          phiL <- map(1:L, function(i, ndiscdim, m, L) {
-            p <- map(ndiscdim, function(n, m, L) {
-              out <- numeric(m)
-              out[1:n] <- nimble::rdirch(1, rep(1, n))
-              out
-            }, m = m, L = L)
-            p <- do.call("rbind", p)
-            p
-          }, ndiscdim = ndiscdim, m = max(ndiscdim), L = L)
-          phiL <- abind(phiL, along = 3)
-          phiL <- array(phiL, dim = c(length(ndiscdim), max(ndiscdim), L))
-          
-          
-          x_cont_miss1 <- x_cont_miss
-          x_cont_miss1[!is.na(x_cont_miss)] <- NA
-          x_cont_miss1[is.na(x_cont_miss)] <- 0
-          x_disc_miss1 <- x_disc_miss
-          x_disc_miss1[!is.na(x_disc_miss)] <- NA
-          x_disc_miss1[is.na(x_disc_miss)] <- 1
-          
-          inits <- list(
-            alpha = alpha,
-            v = v,
-            w = w,
+          sb <- .init_stick_breaking(L)
+          z <- rcat(N, sb$w)
+          zmiss <- rcat(Nmiss, sb$w)
+          cont <- .init_continuous_params(L, mu0, tau0, R0, kappa0)
+          phiL <- .init_discrete_phiL(L, ndiscdim)
+
+          list(
+            alpha = sb$alpha,
+            v = sb$v,
+            w = sb$w,
             z = z,
             zmiss = zmiss,
-            R1 = R1,
-            kappa1 = kappa1,
-            muL = muL,
-            tauL = tauL,
+            R1 = cont$R1,
+            kappa1 = cont$kappa1,
+            muL = cont$muL,
+            tauL = cont$tauL,
             phiL = phiL,
-            x_cont_miss = x_cont_miss1,
-            x_disc_miss = x_disc_miss1,
+            x_cont_miss = .init_missing_placeholder(x_cont_miss, 0),
+            x_disc_miss = .init_missing_placeholder(x_disc_miss, 1),
             logDens = 0
           )
-          inits
         }
-        
-        # adding this so that the logProb isn't -Inf
-        logProb = "-Inf"
-        
-        while (logProb == "-Inf") {
-          
-          model <- nimbleModel(
-            code = code,
-            constants = consts,
-            data = data,
-            inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss, data$x_disc_miss)
-          )
-          
-          logProb = model$calculate()
-          
-        }
-        
-        #compile the model
-        cmodel <- compileNimble(model)
-        
+
+        cmodel <- .build_dpmm_model(code, consts, data, function() {
+          initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss, data$x_disc_miss)
+        })
+
         #set monitors
         config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "x_disc_miss", "logDens"), thin = 1, print = FALSE)
-        
+
         ## add custom sampler
-        for(i in 1:nrow(data$x_cont_miss)) {
-          
-          if(sum(is.na(data$x_cont_miss[i, ])) == 1) {
-            target = paste0("x_cont_miss[", i, ", 1:", ncol(data$x_cont_miss), "]")
-            config$removeSampler(target)
-            config$addSampler(
-              target = target,
-              type = 'sampler_conditional_RW',
-              control = list(scale = 1, index = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE),
-              allowData = TRUE
-            )
-          } else if (sum(is.na(data$x_cont_miss[i, ])) == ncol(continuous) || sum(is.na(data$x_cont_miss[i, ])) == 0) {
-            #nothing happens because we just want draws from the component
-          } else {
-            target = paste0("x_cont_miss[", i, ", 1:", ncol(data$x_cont_miss), "]")
-            config$removeSampler(target)
-            config$addSampler(
-              target = target,
-              type = 'sampler_conditional_RW_block',
-              control = list(scale = 1, indices = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE),
-              allowData = TRUE
-            )
-          }
-        }
-        
+        config <- .assign_missing_cont_samplers(config, data$x_cont_miss, ncol(continuous))
+
         #:-------------------------------------------------------------------
         ## If there are rows with incomplete continuous
       } else {
@@ -489,112 +422,38 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
           
           ## sample initial values
           initFn <- function(L, N, Nmiss, mu0, tau0, R0, kappa0, ndiscdim, x_cont_miss) {
-            
-            # DPMM clustering
-            alpha <- rgamma(1, shape = 2, rate = 1)
-            v <- rbeta(L - 1, 1, alpha)
-            w <- v[1]
-            for(i in 2:(L - 1)) {
-              w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-            }
-            w <- c(w, prod(1 - v))
-            z <- rcat(N, w)
-            zmiss <- rcat(Nmiss, w)
-            
-            # DPMM for continuous
-            R1 <- rWishart(1, kappa0, R0)[, , 1]
-            kappa1 <- kappa0 - 1
-            while(kappa1 < kappa0) {
-              kappa1 <- rexp(1, 0.1)
-            }
-            muL <- mvrnorm(L, mu0, tau0)
-            tauL <- rWishart(L, kappa1, R1)
-            
-            # DPMM discrete
-            phiL <- map(1:L, function(i, ndiscdim, m, L) {
-              p <- map(ndiscdim, function(n, m, L) {
-                out <- numeric(m)
-                out[1:n] <- nimble::rdirch(1, rep(1, n))
-                out
-              }, m = m, L = L)
-              p <- do.call("rbind", p)
-              p
-            }, ndiscdim = ndiscdim, m = max(ndiscdim), L = L)
-            phiL <- abind(phiL, along = 3)
-            phiL <- array(phiL, dim = c(length(ndiscdim), max(ndiscdim), L))
-            
-            
-            x_cont_miss1 <- x_cont_miss
-            x_cont_miss1[!is.na(x_cont_miss)] <- NA
-            x_cont_miss1[is.na(x_cont_miss)] <- 0
-            
-            inits <- list(
-              alpha = alpha,
-              v = v,
-              w = w,
+            sb <- .init_stick_breaking(L)
+            z <- rcat(N, sb$w)
+            zmiss <- rcat(Nmiss, sb$w)
+            cont <- .init_continuous_params(L, mu0, tau0, R0, kappa0)
+            phiL <- .init_discrete_phiL(L, ndiscdim)
+
+            list(
+              alpha = sb$alpha,
+              v = sb$v,
+              w = sb$w,
               z = z,
               zmiss = zmiss,
-              R1 = R1,
-              kappa1 = kappa1,
-              muL = muL,
-              tauL = tauL,
+              R1 = cont$R1,
+              kappa1 = cont$kappa1,
+              muL = cont$muL,
+              tauL = cont$tauL,
               phiL = phiL,
-              x_cont_miss = x_cont_miss1,
+              x_cont_miss = .init_missing_placeholder(x_cont_miss, 0),
               logDens = 0
             )
-            inits
           }
-          
-          
-          # adding this so that the logProb isn't -Inf
-          logProb = "-Inf"
-          
-          while (logProb == "-Inf") {
-            
-            model <- nimbleModel(
-              code = code,
-              constants = consts,
-              data = data,
-              inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss)
-            )
-            
-            logProb = model$calculate()
-            
-          }
-          
-          #compile the model
-          cmodel <- compileNimble(model)
-          
+
+          cmodel <- .build_dpmm_model(code, consts, data, function() {
+            initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_cont_miss)
+          })
+
           #set monitors
           config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_cont_miss", "logDens"), thin = 1, print = FALSE)
-          
-          
+
           ## add custom sampler
-          for(i in 1:nrow(data$x_cont_miss)) {
-            
-            if(sum(is.na(data$x_cont_miss[i, ])) == 1) {
-              target = paste0("x_cont_miss[", i, ", 1:", ncol(data$x_cont_miss), "]")
-              config$removeSampler(target)
-              config$addSampler(
-                target = target,
-                type = 'sampler_conditional_RW',
-                control = list(scale = 1, index = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE),
-                allowData = TRUE
-              )
-            } else if (sum(is.na(data$x_cont_miss[i, ])) == ncol(continuous) || sum(is.na(data$x_cont_miss[i, ])) == 0) {
-              #nothing happens because we just want draws from the component
-            } else {
-              target = paste0("x_cont_miss[", i, ", 1:", ncol(data$x_cont_miss), "]")
-              config$removeSampler(target)
-              config$addSampler(
-                target = target,
-                type = 'sampler_conditional_RW_block',
-                control = list(scale = 1, indices = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE),
-                allowData = TRUE
-              )
-            }
-          }
-          
+          config <- .assign_missing_cont_samplers(config, data$x_cont_miss, ncol(continuous))
+
           #:-------------------------------------------------------------------
           ## If there are rows with incomplete categorical predictors
           
@@ -715,85 +574,35 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
           
           ## sample initial values
           initFn <- function(L, N, Nmiss, mu0, tau0, R0, kappa0, ndiscdim, x_disc_miss) {
-            
-            # DPMM clustering
-            alpha <- rgamma(1, shape = 2, rate = 1)
-            v <- rbeta(L - 1, 1, alpha)
-            w <- v[1]
-            for(i in 2:(L - 1)) {
-              w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-            }
-            w <- c(w, prod(1 - v))
-            z <- rcat(N, w)
-            zmiss <- rcat(Nmiss, w)
-            
-            # DPMM for continuous
-            R1 <- rWishart(1, kappa0, R0)[, , 1]
-            kappa1 <- kappa0 - 1
-            while(kappa1 < kappa0) {
-              kappa1 <- rexp(1, 0.1)
-            }
-            muL <- mvrnorm(L, mu0, tau0)
-            tauL <- rWishart(L, kappa1, R1)
-            
-            # DPMM discrete
-            phiL <- map(1:L, function(i, ndiscdim, m, L) {
-              p <- map(ndiscdim, function(n, m, L) {
-                out <- numeric(m)
-                out[1:n] <- nimble::rdirch(1, rep(1, n))
-                out
-              }, m = m, L = L)
-              p <- do.call("rbind", p)
-              p
-            }, ndiscdim = ndiscdim, m = max(ndiscdim), L = L)
-            phiL <- abind(phiL, along = 3)
-            phiL <- array(phiL, dim = c(length(ndiscdim), max(ndiscdim), L))
-            
-            x_disc_miss1 <- x_disc_miss
-            x_disc_miss1[!is.na(x_disc_miss1)] <- NA
-            x_disc_miss1[is.na(x_disc_miss1)] <- 1
-            
-            inits <- list(
-              alpha = alpha,
-              v = v,
-              w = w,
+            sb <- .init_stick_breaking(L)
+            z <- rcat(N, sb$w)
+            zmiss <- rcat(Nmiss, sb$w)
+            cont <- .init_continuous_params(L, mu0, tau0, R0, kappa0)
+            phiL <- .init_discrete_phiL(L, ndiscdim)
+
+            list(
+              alpha = sb$alpha,
+              v = sb$v,
+              w = sb$w,
               z = z,
               zmiss = zmiss,
-              R1 = R1,
-              kappa1 = kappa1,
-              muL = muL,
-              tauL = tauL,
+              R1 = cont$R1,
+              kappa1 = cont$kappa1,
+              muL = cont$muL,
+              tauL = cont$tauL,
               phiL = phiL,
-              x_disc_miss = x_disc_miss1,
+              x_disc_miss = .init_missing_placeholder(x_disc_miss, 1),
               logDens = 0
             )
-            inits
           }
-          
-          
-          # adding this so that the logProb isn't -Inf
-          logProb = "-Inf"
-          
-          while (logProb == "-Inf") {
-            
-            model <- nimbleModel(
-              code = code,
-              constants = consts,
-              data = data,
-              inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_disc_miss)
-            )
-            
-            logProb = model$calculate()
-            
-          }
-          
-          #compile the model
-          cmodel <- compileNimble(model)
-          
+
+          cmodel <- .build_dpmm_model(code, consts, data, function() {
+            initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim, data$x_disc_miss)
+          })
+
           #set monitors
           config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "x_disc_miss", "logDens"), thin = 1, print = FALSE)
-          
-          
+
         }
       }
       
@@ -870,78 +679,34 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
       
       ## sample initial values
       initFn <- function(L, N, mu0, tau0, R0, kappa0, ndiscdim) {
-        
-        # DPMM clustering
-        alpha <- rgamma(1, shape = 2, rate = 1)
-        v <- rbeta(L - 1, 1, alpha)
-        w <- v[1]
-        for(i in 2:(L - 1)) {
-          w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-        }
-        w <- c(w, prod(1 - v))
-        z <- rcat(N, w)
-        
-        # DPMM for continuous
-        R1 <- rWishart(1, kappa0, R0)[, , 1]
-        kappa1 <- kappa0 - 1
-        while(kappa1 < kappa0) {
-          kappa1 <- rexp(1, 0.1)
-        }
-        muL <- mvrnorm(L, mu0, tau0)
-        tauL <- rWishart(L, kappa1, R1)
-        
-        # DPMM discrete
-        phiL <- map(1:L, function(i, ndiscdim, m, L) {
-          p <- map(ndiscdim, function(n, m, L) {
-            out <- numeric(m)
-            out[1:n] <- nimble::rdirch(1, rep(1, n))
-            out
-          }, m = m, L = L)
-          p <- do.call("rbind", p)
-          p
-        }, ndiscdim = ndiscdim, m = max(ndiscdim), L = L)
-        phiL <- abind(phiL, along = 3)
-        phiL <- array(phiL, dim = c(length(ndiscdim), max(ndiscdim), L))
-        
-        inits <- list(
-          alpha = alpha,
-          v = v,
-          w = w,
+        sb <- .init_stick_breaking(L)
+        z <- rcat(N, sb$w)
+        cont <- .init_continuous_params(L, mu0, tau0, R0, kappa0)
+        phiL <- .init_discrete_phiL(L, ndiscdim)
+
+        list(
+          alpha = sb$alpha,
+          v = sb$v,
+          w = sb$w,
           z = z,
-          R1 = R1,
-          kappa1 = kappa1,
-          muL = muL,
-          tauL = tauL,
+          R1 = cont$R1,
+          kappa1 = cont$kappa1,
+          muL = cont$muL,
+          tauL = cont$tauL,
           phiL = phiL,
           logDens = 0
         )
-        inits
       }
-      
-      # adding this so that the logProb isn't -Inf
-      logProb = "-Inf"
-      
-      while (logProb == "-Inf") {
-        
-        model <- nimbleModel(
-          code = code,
-          constants = consts,
-          data = data,
-          inits = initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim)
-        )
-        
-        logProb = model$calculate()
-        
-      }
-      
-      #compile the model
-      cmodel <- compileNimble(model)
-      
+
+      cmodel <- .build_dpmm_model(code, consts, data, function() {
+        initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0, consts$ndiscdim)
+      })
+
       #set monitors
       config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "phiL", "logDens"), thin = 1, print = FALSE)
-      
+
     }
-    
+
   } else {
     
     #:-------------------------------------------------------------------
@@ -1023,99 +788,36 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
         
         ## sample initial values
         initFn <- function(L, N, Nmiss, mu0, tau0, R0, kappa0, x_cont_miss) {
-          
-          # DPMM clustering
-          alpha <- rgamma(1, shape = 2, rate = 1)
-          v <- rbeta(L - 1, 1, alpha)
-          w <- v[1]
-          for(i in 2:(L - 1)) {
-            w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-          }
-          w <- c(w, prod(1 - v))
-          z <- rcat(N, w)
-          zmiss <- rcat(Nmiss, w)
-          
-          # DPMM for continuous
-          R1 <- rWishart(1, kappa0, R0)[, , 1]
-          kappa1 <- kappa0 - 1
-          while(kappa1 < kappa0) {
-            kappa1 <- rexp(1, 0.1)
-          }
-          muL <- mvrnorm(L, mu0, tau0)
-          tauL <- rWishart(L, kappa1, R1)
-          
-          x_cont_miss1 <- x_cont_miss
-          x_cont_miss1[!is.na(x_cont_miss)] <- NA
-          x_cont_miss1[is.na(x_cont_miss)] <- 0
-          
-          inits <- list(
-            alpha = alpha,
-            v = v,
-            w = w,
+          sb <- .init_stick_breaking(L)
+          z <- rcat(N, sb$w)
+          zmiss <- rcat(Nmiss, sb$w)
+          cont <- .init_continuous_params(L, mu0, tau0, R0, kappa0)
+
+          list(
+            alpha = sb$alpha,
+            v = sb$v,
+            w = sb$w,
             z = z,
             zmiss = zmiss,
-            R1 = R1,
-            kappa1 = kappa1,
-            muL = muL,
-            tauL = tauL,
-            x_cont_miss = x_cont_miss1,
+            R1 = cont$R1,
+            kappa1 = cont$kappa1,
+            muL = cont$muL,
+            tauL = cont$tauL,
+            x_cont_miss = .init_missing_placeholder(x_cont_miss, 0),
             logDens = 0
           )
-          inits
         }
-        
-        
-        # adding this so that the logProb isn't -Inf
-        logProb = "-Inf"
-        
-        while (logProb == "-Inf") {
-          
-          model <- nimbleModel(
-            code = code,
-            constants = consts,
-            data = data,
-            inits = initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, data$x_cont_miss)
-          )
-          
-          logProb = model$calculate()
-          
-        }
-        
-        
-        
-        #compile the model
-        cmodel <- compileNimble(model)
-        
+
+        cmodel <- .build_dpmm_model(code, consts, data, function() {
+          initFn(consts$L, consts$N, consts$Nmiss, data$mu0, data$tau0, data$R0, data$kappa0, data$x_cont_miss)
+        })
+
         #set monitors
         config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "x_cont_miss", "logDens"), thin = 1, print = FALSE)
-        
-        
+
         ## add custom sampler
-        for(i in 1:nrow(data$x_cont_miss)) {
-          
-          if(sum(is.na(data$x_cont_miss[i, ])) == 1) {
-            target = paste0("x_cont_miss[", i, ", 1:", ncol(data$x_cont_miss), "]")
-            config$removeSampler(target)
-            config$addSampler(
-              target = target,
-              type = 'sampler_conditional_RW',
-              control = list(scale = 1, index = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE),
-              allowData = TRUE
-            )
-          } else if (sum(is.na(data$x_cont_miss[i, ])) == ncol(continuous) || sum(is.na(data$x_cont_miss[i, ])) == 0) {
-            #nothing happens because we just want draws from the component
-          } else {
-            target = paste0("x_cont_miss[", i, ", 1:", ncol(data$x_cont_miss), "]")
-            config$removeSampler(target)
-            config$addSampler(
-              target = target,
-              type = 'sampler_conditional_RW_block',
-              control = list(scale = 1, indices = which(is.na(data$x_cont_miss[i, ])), adapt = TRUE),
-              allowData = TRUE
-            )
-          }
-        }
-        
+        config <- .assign_missing_cont_samplers(config, data$x_cont_miss, ncol(continuous))
+
         #:-------------------------------------------------------------------
         ## If there are only complete rows of continuous predictors
       } else {
@@ -1169,68 +871,33 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
         
         ## sample initial values
         initFn <- function(L, N, mu0, tau0, R0, kappa0) {
-          
-          # DPMM clustering
-          alpha <- rgamma(1, shape = 2, rate = 1)
-          v <- rbeta(L - 1, 1, alpha)
-          w <- v[1]
-          for(i in 2:(L - 1)) {
-            w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-          }
-          w <- c(w, prod(1 - v))
-          z <- rcat(N, w)
-          
-          # DPMM for continuous
-          R1 <- rWishart(1, kappa0, R0)[, , 1]
-          kappa1 <- kappa0 - 1
-          while(kappa1 < kappa0) {
-            kappa1 <- rexp(1, 0.1)
-          }
-          muL <- mvrnorm(L, mu0, tau0)
-          tauL <- rWishart(L, kappa1, R1)
-          
-          
-          inits <- list(
-            alpha = alpha,
-            v = v,
-            w = w,
+          sb <- .init_stick_breaking(L)
+          z <- rcat(N, sb$w)
+          cont <- .init_continuous_params(L, mu0, tau0, R0, kappa0)
+
+          list(
+            alpha = sb$alpha,
+            v = sb$v,
+            w = sb$w,
             z = z,
-            R1 = R1,
-            kappa1 = kappa1,
-            muL = muL,
-            tauL = tauL,
+            R1 = cont$R1,
+            kappa1 = cont$kappa1,
+            muL = cont$muL,
+            tauL = cont$tauL,
             logDens = 0
           )
-          inits
         }
-        
-        
-        # adding this so that the logProb isn't -Inf
-        logProb = "-Inf"
-        
-        while (logProb == "-Inf") {
-          
-          model <- nimbleModel(
-            code = code,
-            constants = consts,
-            data = data,
-            inits = initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0)
-          )
-          
-          logProb = model$calculate()
-          
-        }
-        
-        
-        #compile the model
-        cmodel <- compileNimble(model)
-        
+
+        cmodel <- .build_dpmm_model(code, consts, data, function() {
+          initFn(consts$L, consts$N, data$mu0, data$tau0, data$R0, data$kappa0)
+        })
+
         #set monitors
         config <- configureMCMC(cmodel, monitors = c("muL", "tauL", "v","z", "alpha", "logDens"), thin = 1, print = FALSE)
-        
+
       }
-      
-      
+
+
       #:-------------------------------------------------------------------
       ## if the dataset includes only categorical
       
@@ -1320,74 +987,30 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
         
         ## sample initial values
         initFn <- function(L, N, Nmiss, ndiscdim, x_disc_miss) {
-          
-          # DPMM clustering
-          alpha <- rgamma(1, shape = 2, rate = 1)
-          v <- rbeta(L - 1, 1, alpha)
-          w <- v[1]
-          for(i in 2:(L - 1)) {
-            w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-          }
-          w <- c(w, prod(1 - v))
-          z <- rcat(N, w)
-          zmiss <- rcat(Nmiss, w)
-          
-          
-          # DPMM discrete
-          phiL <- map(1:L, function(i, ndiscdim, m, L) {
-            p <- map(ndiscdim, function(n, m, L) {
-              out <- numeric(m)
-              out[1:n] <- nimble::rdirch(1, rep(1, n))
-              out
-            }, m = m, L = L)
-            p <- do.call("rbind", p)
-            p
-          }, ndiscdim = ndiscdim, m = max(ndiscdim), L = L)
-          phiL <- abind(phiL, along = 3)
-          phiL <- array(phiL, dim = c(length(ndiscdim), max(ndiscdim), L))
-          
-          
-          x_disc_miss1 <- x_disc_miss
-          x_disc_miss1[!is.na(x_disc_miss)] <- NA
-          x_disc_miss1[is.na(x_disc_miss)] <- 1
-          
-          
-          inits <- list(
-            alpha = alpha,
-            v = v,
-            w = w,
+          sb <- .init_stick_breaking(L)
+          z <- rcat(N, sb$w)
+          zmiss <- rcat(Nmiss, sb$w)
+          phiL <- .init_discrete_phiL(L, ndiscdim)
+
+          list(
+            alpha = sb$alpha,
+            v = sb$v,
+            w = sb$w,
             z = z,
             zmiss = zmiss,
             phiL = phiL,
-            x_disc_miss = x_disc_miss1,
+            x_disc_miss = .init_missing_placeholder(x_disc_miss, 1),
             logDens = 0
           )
-          inits
         }
-        
-        # adding this so that the logProb isn't -Inf
-        logProb = "-Inf"
-        
-        while (logProb == "-Inf") {
-          
-          model <- nimbleModel(
-            code = code,
-            constants = consts,
-            data = data,
-            inits = initFn(consts$L, consts$N, consts$Nmiss, consts$ndiscdim, data$x_disc_miss)
-          )
-          
-          logProb = model$calculate()
-          
-        }
-        
-        #compile the model
-        cmodel <- compileNimble(model)
-        
+
+        cmodel <- .build_dpmm_model(code, consts, data, function() {
+          initFn(consts$L, consts$N, consts$Nmiss, consts$ndiscdim, data$x_disc_miss)
+        })
+
         #set monitors
         config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "x_disc_miss", "logDens"), thin = 1, print = FALSE)
-        
-        
+
         #:-------------------------------------------------------------------
         ## If there are only rows with complete categorical predictors
       } else {
@@ -1444,68 +1067,30 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
         
         ## sample initial values
         initFn <- function(L, N, ndiscdim) {
-          
-          # DPMM clustering
-          alpha <- rgamma(1, shape = 2, rate = 1)
-          v <- rbeta(L - 1, 1, alpha)
-          w <- v[1]
-          for(i in 2:(L - 1)) {
-            w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
-          }
-          w <- c(w, prod(1 - v))
-          z <- rcat(N, w)
-          
-          
-          # DPMM discrete
-          phiL <- map(1:L, function(i, ndiscdim, m, L) {
-            p <- map(ndiscdim, function(n, m, L) {
-              out <- numeric(m)
-              out[1:n] <- nimble::rdirch(1, rep(1, n))
-              out
-            }, m = m, L = L)
-            p <- do.call("rbind", p)
-            p
-          }, ndiscdim = ndiscdim, m = max(ndiscdim), L = L)
-          phiL <- abind(phiL, along = 3)
-          phiL <- array(phiL, dim = c(length(ndiscdim), max(ndiscdim), L))
-          
-          inits <- list(
-            alpha = alpha,
-            v = v,
-            w = w,
+          sb <- .init_stick_breaking(L)
+          z <- rcat(N, sb$w)
+          phiL <- .init_discrete_phiL(L, ndiscdim)
+
+          list(
+            alpha = sb$alpha,
+            v = sb$v,
+            w = sb$w,
             z = z,
             phiL = phiL,
             logDens = 0
           )
-          inits
         }
-        
-        # adding this so that the logProb isn't -Inf
-        logProb = "-Inf"
-        
-        while (logProb == "-Inf") {
-          
-          model <- nimbleModel(
-            code = code,
-            constants = consts,
-            data = data,
-            inits = initFn(consts$L, consts$N, consts$ndiscdim)
-          )
-          
-          logProb = model$calculate()
-          
-        }
-        
-        
-        #compile the model
-        cmodel <- compileNimble(model)
-        
+
+        cmodel <- .build_dpmm_model(code, consts, data, function() {
+          initFn(consts$L, consts$N, consts$ndiscdim)
+        })
+
         #set monitors
         config <- configureMCMC(cmodel, monitors = c("v","z", "alpha", "phiL", "logDens"), thin = 1, print = FALSE)
-        
+
       }
     }
-    
+
   }
   
   ## add custom sampler for log density
@@ -1526,25 +1111,149 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
                  nburnin = 0,
                  thin = thinning,
                  nchains = mcmc_chains,
+                 setSeed = if (!is.null(seed)) rep(seed, mcmc_chains) else FALSE,
                  progressBar = TRUE,
                  summary = FALSE,
                  samplesAsCodaMCMC = TRUE)
   
   # collect samples
   samples <- run
-  
+
   # create output
+  placeholder_dataset <- .schema_placeholder_row(dataset)
   if (standardise == TRUE) {
     if (ncol(continuous) != 0) {
-      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
+      output <- list(dataset = placeholder_dataset, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise, mean_values = mean_values, sd_values = sd_values)
     } else {
-      output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise)
+      output <- list(dataset = placeholder_dataset, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise)
     }
   } else {
-    output <- list(dataset = synthpop::syn(dataset, k = 1, print.flag = FALSE)$syn, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise)
+    output <- list(dataset = placeholder_dataset, L = L, mcmc_chains = mcmc_chains, thinning = thinning, samples = samples, standardise = standardise)
   }
   
   class(output) <- "dpmm_fit"
-  
+
   return(output)
+}
+
+## Build a single placeholder row with the same column names/order/classes/factor
+## levels as 'dataset', without reusing any real row: each column is drawn
+## independently from its own observed values/levels. Only the schema (not the
+## values) of this row is ever consumed downstream (predict_dpmm_fit/plot_ggpairs).
+.schema_placeholder_row <- function(dataset) {
+  row <- dataset[1, , drop = FALSE]
+  for (col in colnames(dataset)) {
+    if (is.numeric(dataset[[col]])) {
+      row[[col]] <- sample(dataset[[col]], 1)
+    } else {
+      row[[col]] <- factor(sample(levels(dataset[[col]]), 1), levels = levels(dataset[[col]]))
+    }
+  }
+  row
+}
+
+## ---- Shared init/build scaffolding used across every data-shape x missingness
+## branch of runModel(). Each branch still declares its own nimbleCode/consts/data,
+## since nimble needs a fixed model graph per data shape -- only the surrounding
+## R-level plumbing (which is identical regardless of branch) is factored out here.
+
+## Draw DPMM stick-breaking weights -- identical in every branch
+.init_stick_breaking <- function(L) {
+  alpha <- rgamma(1, shape = 2, rate = 1)
+  v <- rbeta(L - 1, 1, alpha)
+  w <- v[1]
+  for (i in 2:(L - 1)) {
+    w <- c(w, v[i] * prod(1 - v[1:(i - 1)]))
+  }
+  w <- c(w, prod(1 - v))
+  list(alpha = alpha, v = v, w = w)
+}
+
+## Draw continuous-component hyperparameters -- identical whenever continuous
+## variables are present
+.init_continuous_params <- function(L, mu0, tau0, R0, kappa0) {
+  R1 <- rWishart(1, kappa0, R0)[, , 1]
+  kappa1 <- kappa0 - 1
+  while (kappa1 < kappa0) {
+    kappa1 <- rexp(1, 0.1)
+  }
+  muL <- mvrnorm(L, mu0, tau0)
+  tauL <- rWishart(L, kappa1, R1)
+  list(R1 = R1, kappa1 = kappa1, muL = muL, tauL = tauL)
+}
+
+## Draw discrete-component category probabilities -- identical whenever
+## categorical variables are present
+.init_discrete_phiL <- function(L, ndiscdim) {
+  phiL <- map(1:L, function(i, ndiscdim, m, L) {
+    p <- map(ndiscdim, function(n, m, L) {
+      out <- numeric(m)
+      out[1:n] <- nimble::rdirch(1, rep(1, n))
+      out
+    }, m = m, L = L)
+    p <- do.call("rbind", p)
+    p
+  }, ndiscdim = ndiscdim, m = max(ndiscdim), L = L)
+  phiL <- abind(phiL, along = 3)
+  array(phiL, dim = c(length(ndiscdim), max(ndiscdim), L))
+}
+
+## Build the init placeholder for a partially-missing data matrix: NA at
+## positions observed in the data (nimble ignores inits values at data-fixed
+## nodes regardless of what's supplied there) and 'fill' at missing positions,
+## which need a valid starting value for the stochastic node.
+.init_missing_placeholder <- function(x_miss, fill) {
+  placeholder <- x_miss
+  placeholder[!is.na(x_miss)] <- NA
+  placeholder[is.na(x_miss)] <- fill
+  placeholder
+}
+
+## Repeatedly draw initial values and build the nimble model until a finite
+## log-probability is reached, then compile it. 'init_thunk' is a zero-argument
+## function (closing over that branch's consts/data) so this can be shared
+## across branches whose initFn() argument lists differ.
+.build_dpmm_model <- function(code, consts, data, init_thunk) {
+  logProb <- "-Inf"
+  while (logProb == "-Inf") {
+    model <- nimbleModel(
+      code = code,
+      constants = consts,
+      data = data,
+      inits = init_thunk()
+    )
+    logProb <- model$calculate()
+  }
+  compileNimble(model)
+}
+
+## Assign the conditional-RW / conditional-RW-block custom samplers for every
+## row with partial continuous missingness, replacing nimble's default sampler
+## for that row's x_cont_miss node. Used identically by every branch that has
+## continuous missingness.
+.assign_missing_cont_samplers <- function(config, x_cont_miss, ncol_continuous) {
+  for (i in 1:nrow(x_cont_miss)) {
+    n_missing <- sum(is.na(x_cont_miss[i, ]))
+    target <- paste0("x_cont_miss[", i, ", 1:", ncol(x_cont_miss), "]")
+    if (n_missing == 1) {
+      config$removeSampler(target)
+      config$addSampler(
+        target = target,
+        type = 'sampler_conditional_RW',
+        control = list(scale = 1, index = which(is.na(x_cont_miss[i, ])), adapt = TRUE),
+        allowData = TRUE
+      )
+    } else if (n_missing == ncol_continuous || n_missing == 0) {
+      # nothing happens because we just want draws from the component
+    } else {
+      config$removeSampler(target)
+      config$addSampler(
+        target = target,
+        type = 'sampler_conditional_RW_block',
+        control = list(scale = 1, indices = which(is.na(x_cont_miss[i, ])), adapt = TRUE),
+        allowData = TRUE
+      )
+    }
+  }
+  config
 }

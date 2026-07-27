@@ -27,11 +27,12 @@ This function plots trace plots of the DPMM estimated parameters.
 data(dataset_1)
 
 ## fit model
-posteriors <- runModel(dataset_1, 
+posteriors <- runModel(dataset_1,
                        mcmc_iterations = 100,
-                       L = 6, 
-                       mcmc_chains = 2, 
-                       standardise = TRUE)
+                       L = 6,
+                       mcmc_chains = 2,
+                       standardise = TRUE,
+                       seed = 1)
 ## plot trace plots
 plot(posteriors)
 }

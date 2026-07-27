@@ -35,22 +35,24 @@
 #' data(dataset_1)
 #' 
 #' ## fit model
-#' posteriors <- runModel(dataset_1, 
+#' posteriors <- runModel(dataset_1,
 #'                        mcmc_iterations = 100,
-#'                        L = 6, 
-#'                        mcmc_chains = 2, 
-#'                        standardise = TRUE)
-#'                        
+#'                        L = 6,
+#'                        mcmc_chains = 2,
+#'                        standardise = TRUE,
+#'                        seed = 1)
+#'
 #' ## introduce missing data
 #' rows <- 501:550
 #' dataset_missing <- dataset_1
 #' dataset_missing_predict <- dataset_missing[rows,]
 #' dataset_missing_predict[,1] <- as.numeric(NA)
-#' 
+#'
 #' # predict missing values
-#' posteriors.dpmmfit <- predict_dpmm_fit(posteriors, 
-#'                                        dataset_missing_predict, 
-#'                                        samples = c(1:100))
+#' posteriors.dpmmfit <- predict_dpmm_fit(posteriors,
+#'                                        dataset_missing_predict,
+#'                                        samples = c(1:100),
+#'                                        seed = 1)
 #' }
 #' 
 #'
@@ -109,15 +111,11 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
       return(w)
     }
     
-    postW <- stick_breaking(v_mat) %>%
-      as_tibble(.name_repair = "unique") %>%
-      mutate(iter = row_number()) %>%
-      tidyr::pivot_longer(-iter, names_to = "var", values_to = "value") %>%
-      mutate(var = as.integer(gsub("V", "", var))) %>%
-      arrange(iter, var) %>%
-      group_by(iter) %>%
-      summarise(w = list(value), .groups = "drop")
-    
+    ## w's columns are already in the correct 1..K+1 order by construction
+    ## (stick_breaking() builds them in that order directly), so no column-name
+    ## parsing is needed to recover component order -- just split rows to a list
+    postW <- tibble(iter = seq_len(nrow(v_mat)), w = asplit(stick_breaking(v_mat), 1))
+
     #:----------------------------------------------------------
     ## If cont_vars is provided (and hence the model is fitted to continuous variables)
     if (!is.null(cont_vars)) {
@@ -126,43 +124,46 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         as_tibble(.name_repair = "unique") %>%
         select(starts_with("muL[")) %>%
         as.matrix()
-      
+
+      ## parse each column's (component, dim) indices once, instead of
+      ## re-deriving them via a pivot_longer/group_by round trip per element
+      mu_idx <- do.call(rbind, strsplit(gsub("muL\\[|\\]", "", colnames(mu_cols)), ",\\s*"))
+      mode(mu_idx) <- "integer"
       n_iter <- nrow(mu_cols)
-      n_param <- ncol(mu_cols)
-      
-      postMu <- tibble(value = as.vector(mu_cols),
-                       iter = rep(1:n_iter, times = n_param),
-                       var = rep(colnames(mu_cols), each = n_iter)) %>%
-        mutate(var = gsub("muL\\[|\\]", "", var)) %>%
-        separate(var, c("component", "dim"), sep = ",", convert = TRUE) %>%
-        arrange(iter, component, dim) %>%
-        group_by(iter, component) %>%
-        summarise(mu = list(value), .groups = "drop") %>%
-        group_by(iter) %>%
-        summarise(muL = list(t(simplify2array(mu))), .groups = "drop")
-      
+      L_mu <- max(mu_idx[, 1])
+      d_mu <- max(mu_idx[, 2])
+
+      muL_list <- vector("list", n_iter)
+      for (it in seq_len(n_iter)) {
+        m <- matrix(NA_real_, nrow = L_mu, ncol = d_mu)
+        m[cbind(mu_idx[, 1], mu_idx[, 2])] <- mu_cols[it, ]
+        muL_list[[it]] <- m
+      }
+      postMu <- tibble(iter = seq_len(n_iter), muL = muL_list)
+
       ### Extract posterior samples of component precision matrices
       tau_cols <- samples_chain %>%
         as_tibble(.name_repair = "unique") %>%
         select(starts_with("tauL[")) %>%
         as.matrix()
-      
+
+      tau_idx <- do.call(rbind, strsplit(gsub("tauL\\[|\\]", "", colnames(tau_cols)), ",\\s*"))
+      mode(tau_idx) <- "integer"
       n_iter <- nrow(tau_cols)
-      n_param <- ncol(tau_cols)
-      
-      postTau <- tibble(value = as.vector(tau_cols),
-                        iter = rep(1:n_iter, times = n_param),
-                        var = rep(colnames(tau_cols), each = n_iter)) %>%
-        mutate(var = gsub("tauL\\[|\\]", "", var)) %>%
-        separate(var, c("dim1", "dim2", "component"), sep = ",", convert = TRUE) %>%
-        arrange(iter, component, dim2, dim1) %>%
-        group_by(iter, component) %>%
-        summarise(tau = list(matrix(value, nrow = max(dim1), ncol = max(dim2), byrow = TRUE)), .groups = "drop") %>%
-        group_by(iter) %>%
-        summarise(tauL = list(abind(tau, along = 3)), .groups = "drop")
-      
+      d1_tau <- max(tau_idx[, 1])
+      d2_tau <- max(tau_idx[, 2])
+      L_tau <- max(tau_idx[, 3])
+
+      tauL_list <- vector("list", n_iter)
+      for (it in seq_len(n_iter)) {
+        a <- array(NA_real_, dim = c(d1_tau, d2_tau, L_tau))
+        a[cbind(tau_idx[, 1], tau_idx[, 2], tau_idx[, 3])] <- tau_cols[it, ]
+        tauL_list[[it]] <- a
+      }
+      postTau <- tibble(iter = seq_len(n_iter), tauL = tauL_list)
+
     }
-    
+
     #:----------------------------------------------------------
     ## If cat_vars is provided (and hence the model is fitted to categorical variables)
     if (!is.null(cat_vars)) {
@@ -171,21 +172,22 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
         as_tibble(.name_repair = "unique") %>%
         select(starts_with("phiL[")) %>%
         as.matrix()
-      
+
+      phi_idx <- do.call(rbind, strsplit(gsub("phiL\\[|\\]", "", colnames(phi_cols)), ",\\s*"))
+      mode(phi_idx) <- "integer"
       n_iter <- nrow(phi_cols)
-      n_param <- ncol(phi_cols)
-      
-      postPhi <- tibble(value = as.vector(phi_cols),
-                        iter = rep(1:n_iter, times = n_param),
-                        var = rep(colnames(phi_cols), each = n_iter)) %>%
-        mutate(var = gsub("phiL\\[|\\]", "", var)) %>%
-        separate(var, c("dim1", "dim2", "component"), sep = ",", convert = TRUE) %>%
-        arrange(iter, component, dim1, dim2) %>%
-        group_by(iter, component) %>%
-        summarise(phi = list(matrix(value, nrow = ndisc, ncol = ndiscdim, byrow = TRUE)), .groups = "drop") %>%
-        group_by(iter) %>%
-        summarise(phiL = list(abind(phi, along = 3)), .groups = "drop")
-      
+      d1_phi <- max(phi_idx[, 1])
+      d2_phi <- max(phi_idx[, 2])
+      L_phi <- max(phi_idx[, 3])
+
+      phiL_list <- vector("list", n_iter)
+      for (it in seq_len(n_iter)) {
+        a <- array(NA_real_, dim = c(d1_phi, d2_phi, L_phi))
+        a[cbind(phi_idx[, 1], phi_idx[, 2], phi_idx[, 3])] <- phi_cols[it, ]
+        phiL_list[[it]] <- a
+      }
+      postPhi <- tibble(iter = seq_len(n_iter), phiL = phiL_list)
+
     }
     
     #:----------------------------------------------------------
@@ -276,16 +278,14 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
               # marg matrices
               marg_mean <- mu[, variables, drop = FALSE]
               marg_sigma <- tau[variables, variables, , drop = FALSE]
-              
-              lmarg <- map_dbl(1:length(w), function(i, x, mu, sigma) {
+
+              ## per-component log-likelihood, computed once and reused for both
+              ## the marginal normalising constant and the conditional weights
+              ll <- map_dbl(1:length(w), function(i, x, mu, sigma) {
                 mvtnorm::dmvnorm(x, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i])
               }, x = patient[variables], mu = marg_mean, sigma = marg_sigma)
-              lmarg <- log_sum_exp(lmarg)
-              
-              ## conditional for x2 for all components
-              z_given_x_l <- map_dbl(1:length(w), function(i, x, mu, sigma, denom) {
-                mvtnorm::dmvnorm(x, mu[i,], solve(sigma[, , i]), log = TRUE) + log(w[i]) - denom
-              }, x = patient[variables], mu = marg_mean, sigma = marg_sigma, denom = lmarg)
+              lmarg <- log_sum_exp(ll)
+              z_given_x_l <- ll - lmarg
               z_given_x <- exp(z_given_x_l)
               
               # draw cluster from adjusted probs
@@ -340,23 +340,18 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             variables <- which(!is.na(patient))
             
             if (!is_empty(variables)) {
-              lmarg <- map_dbl(1:length(w), function(i, x, phi) {
+              ## per-component log-likelihood, computed once and reused for both
+              ## the marginal normalising constant and the conditional weights
+              ll <- map_dbl(1:length(w), function(i, x, phi) {
                 value = log(w[i])
                 for (l in 1:length(variables)) {
                   value <- value + log(phi[l ,x[variables[l]] , i])
                 }
                 value
               }, x = patient, phi = phi)
-              lmarg <- log_sum_exp(lmarg)
-              
-              z_given_x_l <- map_dbl(1:length(w), function(i, x, phi, denom) {
-                value <- log(w[i]) - denom
-                for (l in 1:length(variables)) {
-                  value <- value + log(phi[l ,x[variables[l]] , i])
-                }
-                value
-              }, x = patient, phi = phi, denom = lmarg)
-              
+              lmarg <- log_sum_exp(ll)
+              z_given_x_l <- ll - lmarg
+
               z_given_x <- exp(z_given_x_l)
               
               draw <- which.max(rmultinom(n = 1, size = 1, prob = z_given_x))
@@ -405,39 +400,29 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
               marg_mean <- mu[, continuous_vars_given, drop = FALSE]
               marg_sigma <- tau[continuous_vars_given, continuous_vars_given, , drop = FALSE]
               
-              lmarg <- map_dbl(1:length(w), function(i, xcont, xcat, mu, sigma, phi) {
-                if (!isSymmetric(solve(sigma[, , i]))) {
+              ## per-component log-likelihood (NA when the precision matrix isn't
+              ## symmetric, matching prior behaviour), computed once and reused for
+              ## both the marginal normalising constant and the conditional weights
+              ll <- map_dbl(1:length(w), function(i, xcont, xcat, mu, sigma, phi) {
+                inv_sigma <- solve(sigma[, , i])
+                if (!isSymmetric(inv_sigma)) {
                   value = as.numeric(NA)
                 } else {
                   # calculate the density for continuous
-                  value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i])
+                  value <- mvtnorm::dmvnorm(xcont, mu[i, ], inv_sigma, log = TRUE) + log(w[i])
                   # calculate the density for categorical
                   for (l in 1:length(categorical_vars)) {
                     value <- value + log(phi[l ,xcat[categorical_vars[l]] , i])
                   }
                 }
                 value
-                
+
               }, xcont = patient[continuous_vars_given], xcat = patient[(length(cont_vars)+1):(length(cont_vars)+length(cat_vars))], mu = marg_mean, sigma = marg_sigma, phi = phi)
-              lmarg <- log_sum_exp(lmarg)
-              
-              z_given_x_l <- map_dbl(1:length(w), function(i, xcont, xcat, mu, sigma, phi, denom) {
-                if (!isSymmetric(solve(sigma[, , i]))) {
-                  value = NA
-                } else {
-                  # calculate the density for continuous
-                  value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i]) - denom
-                  # calculate the density for categorical
-                  for (l in 1:length(categorical_vars)) {
-                    value <- value + log(phi[l ,xcat[categorical_vars[l]] , i])
-                  }
-                }
-                
-                value
-              }, xcont = patient[continuous_vars_given], xcat = patient[(length(cont_vars)+1):(length(cont_vars)+length(cat_vars))], mu = marg_mean, sigma = marg_sigma, phi = phi, denom = lmarg)
-              
+              lmarg <- log_sum_exp(ll)
+              z_given_x_l <- ll - lmarg
+
               z_given_x <- exp(z_given_x_l)
-              
+
               z_given_x[is.na(z_given_x)] <- 0
               
               # draw cluster from adjusted probs
@@ -450,17 +435,15 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
               marg_mean <- mu[, continuous_vars_given, drop = FALSE]
               marg_sigma <- tau[continuous_vars_given, continuous_vars_given, , drop = FALSE]
               
-              lmarg <- map_dbl(1:length(w), function(i, xcont, mu, sigma) {
+              ## per-component log-likelihood, computed once and reused for both
+              ## the marginal normalising constant and the conditional weights
+              ll <- map_dbl(1:length(w), function(i, xcont, mu, sigma) {
                 # calculate the density for continuous
                 value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i])
               }, xcont = patient[continuous_vars_given], mu = marg_mean, sigma = marg_sigma)
-              lmarg <- log_sum_exp(lmarg)
-              
-              z_given_x_l <- map_dbl(1:length(w), function(i, xcont, mu, sigma, denom) {
-                # calculate the density for continuous
-                value <- mvtnorm::dmvnorm(xcont, mu[i, ], solve(sigma[, , i]), log = TRUE) + log(w[i]) - denom
-              }, xcont = patient[continuous_vars_given], mu = marg_mean, sigma = marg_sigma, denom = lmarg)
-              
+              lmarg <- log_sum_exp(ll)
+              z_given_x_l <- ll - lmarg
+
               z_given_x <- exp(z_given_x_l)
               
               # draw cluster from adjusted probs
@@ -470,7 +453,9 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
             } else if (is_empty(continuous_vars_given) & !is_empty(categorical_vars)) {
               # if there is categorical vars  for w-conditional
               
-              lmarg <- map_dbl(1:length(w), function(i, xcat, psi_var1) {
+              ## per-component log-likelihood, computed once and reused for both
+              ## the marginal normalising constant and the conditional weights
+              ll <- map_dbl(1:length(w), function(i, xcat, phi) {
                 # calculate the density for continuous
                 value = log(w[i])
                 # calculate the density for categorical
@@ -479,18 +464,9 @@ posterior_dpmm <- function(patient, samples, seed = NULL, cont_vars = NULL, cat_
                 }
                 value
               }, xcat = patient[(length(cont_vars)+1):(length(cont_vars)+length(cat_vars))], phi = phi)
-              lmarg <- log_sum_exp(lmarg)
-              
-              z_given_x_l <- map_dbl(1:length(w), function(i, xcat, psi_var1, denom) {
-                # calculate the density for continuous
-                value = log(w[i]) - denom
-                # calculate the density for categorical
-                for (l in 1:length(categorical_vars)) {
-                  value <- value + log(phi[l ,xcat[categorical_vars[l]] , i])
-                }
-                value
-              }, xcat = patient[(length(cont_vars)+1):(length(cont_vars)+length(cat_vars))], phi = phi, denom = lmarg)
-              
+              lmarg <- log_sum_exp(ll)
+              z_given_x_l <- ll - lmarg
+
               z_given_x <- exp(z_given_x_l)
               
               # draw cluster from adjusted probs
