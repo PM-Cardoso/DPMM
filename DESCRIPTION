@@ -28,13 +28,14 @@ Imports:
     mvtnorm,
     tidyr,
     ggplot2,
-    GGally,
+    GGally (>= 2.3.0),
     patchwork,
 Depends:
     nimble,
     tidyselect
 RoxygenNote: 7.2.3
-Suggests: 
+Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    tidyverse
 VignetteBuilder: knitr

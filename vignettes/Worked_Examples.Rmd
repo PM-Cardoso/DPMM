@@ -13,6 +13,7 @@ knitr::opts_chunk$set(
   fig.dim=c(6,6),
   comment = "#>"
 )
+set.seed(20240101)
 ```
 
 # Overview
@@ -730,8 +731,11 @@ imputed_values_2 <- as_tibble(posteriors$samples$chain1)%>%
   dplyr::slice(1000:2500)%>%
   unlist()
 ggplot() +
-  geom_point(aes(x = imputed_values_1, y = imputed_values_2), alpha = 0.6) +
-  geom_point(aes(x = dataset_5[1,"X1"], y = dataset_5[1,"X2"]))
+  geom_point(aes(x = imputed_values_1, y = imputed_values_2), colour = "darkorange", alpha = 0.6) +
+  geom_point(aes(x = dataset_5[1,"X1"], y = dataset_5[1,"X2"]),
+             colour = "darkorange3",
+             fill = "black",
+             size = 3)
 
 # Table predicted values vs observed values
 # Note: Variable X3 is well explained by X4
