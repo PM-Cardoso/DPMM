@@ -1,6 +1,6 @@
 # DPMM
 
-### Overview
+### Overview 
 
 **DPMM** is an R package providing a library of model fitting functions, diagnostics tools for the fitted model and plotting functions. This package is developed from the work done in Cardoso, Dennis, Bowden, Shields and McKinley (2024) <[https://doi.org/10.1186/s12911-023-02400-3](https://doi.org/10.1186/s12911-023-02400-3)>.
 
