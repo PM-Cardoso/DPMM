@@ -9,6 +9,7 @@ Description: This package fits a Dirichlet Process Mixture Model (DPMM) to compl
   with continuous and categorical variables. The model structure and possible uses are explored in
   the pre-print Cardoso, Dennis, Bowden, Shields and McKinley (2023) <https://doi.org/10.1101/2022.07.26.22278066>.
 License: GPL (>= 3)
+URL: https://github.com/PM-Cardoso/DPMM, https://PM-Cardoso.github.io/DPMM/
 BugReports: https://github.com/PM-Cardoso/DPMM/issues
 Encoding: UTF-8
 Imports: 

@@ -81,3 +81,13 @@ reference:
       - plot_alpha
       - plot_dpmm_fit
       - plot_ggpairs
+  - title: "Synthetic datasets"
+    desc: >
+      Example datasets used to demonstrate and test the package.
+    contents:
+      - dataset_1
+      - dataset_2
+      - dataset_3
+      - dataset_4
+      - dataset_5
+      - dataset_6
