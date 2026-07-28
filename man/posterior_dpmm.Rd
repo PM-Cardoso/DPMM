@@ -27,7 +27,7 @@ posterior_dpmm(
 \item{mcmc_chain}{MCMC posterior samples of DPMM parameters}
 }
 \value{
-A list with n entries of n rows with missingness
+A list with n entries of n rows with missingness, in the same row order as 'patient'.
 }
 \description{
 Sample missing values from the fitted DPMM

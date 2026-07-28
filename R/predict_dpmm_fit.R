@@ -8,7 +8,9 @@
 #' @param seed specify seed to be used for reproducibility. (default = NULL)
 #' @param ... other parameters used in 'posterior.dpmm'
 #'
-#' @return A list with n entries for n rows with missingness, each entry is a dataframe with the sampled missing values.
+#' @return A list with n entries for n rows with missingness, each entry is a dataframe with the sampled missing values, in the same
+#'   row order as 'newdata'. Continuous values are automatically converted back to their original scale, regardless of whether the
+#'   model was fitted with 'standardise = TRUE'.
 #'
 #' @examples
 #' \dontrun{
@@ -159,8 +161,25 @@ predict_dpmm_fit <- function(object, newdata, samples = seq(1000,2500, 100), see
   #:----------------------------------------------------------
   ## sample posterior predictive distributions for missing values
   posterior <- posterior_dpmm(dataset_prediction, samples_object, seed = seed, cont_vars = cont_vars, cat_vars = cat_vars, mcmc_chain = object$mcmc_chains)
-  
+
+  #:----------------------------------------------------------
+  ## 'posterior_dpmm' works entirely in the (possibly standardised) fitting
+  ## space; convert continuous predictions back to their original scale here
+  ## so callers never have to know whether the model was fit on standardised
+  ## data.
+  if (isTRUE(object$standardise) && !is.null(cont_vars)) {
+    for (var in cont_vars) {
+      mean_var <- object$mean_values[, var]
+      sd_var <- object$sd_values[, var]
+      for (p in seq_along(posterior)) {
+        if (var %in% colnames(posterior[[p]])) {
+          posterior[[p]][[var]] <- posterior[[p]][[var]] * sd_var + mean_var
+        }
+      }
+    }
+  }
+
   return(posterior)
-  
+
 }
 

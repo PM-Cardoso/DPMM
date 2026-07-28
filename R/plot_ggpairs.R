@@ -111,10 +111,10 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
       }
     }
     
-    object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise, mcmc_chains = x$mcmc_chains)
-    
-    
-    
+    object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise, mcmc_chains = x$mcmc_chains, mean_values = x$mean_values, sd_values = x$sd_values)
+
+
+
   } else {
     #:-----------------------------------------------------
     ## If newdata is missing, set up MCMC iterations for random samples
@@ -140,8 +140,8 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
       }
     }
     
-    object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise, mcmc_chains = x$mcmc_chains)
-     
+    object <- list(dataset = x$dataset, L = x$L, samples = samples, standardise = x$standardise, mcmc_chains = x$mcmc_chains, mean_values = x$mean_values, sd_values = x$sd_values)
+
   }
     
 
@@ -183,35 +183,14 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
     
     newdata_plot <- cbind(newdata, Data = "Original")
     
+    ## 'predict_dpmm_fit' already returns continuous predictions on their
+    ## original scale (destandardised internally), so no further conversion
+    ## is needed here.
     posteriors_plot <- cbind(posteriors[[1]], Data = "DPMM")
-    
-    #if values were standardised, bring them back to normal
-    if (inherits(x, "dpmm_fit")) {
-      if (x$standardise == TRUE) {
-        continuous <- dplyr::select(x$dataset, where(is.numeric))
-        if (ncol(continuous) != 0) {
-          for (i in 1:ncol(continuous)) {
-            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x$sd_values[i])+x$mean_values[i]
-          }
-        }
-        
-      }
-    } else {
-      if (x[[1]]$standardise == TRUE) {
-        continuous <- dplyr::select(x[[1]]$dataset, where(is.numeric))
-        if (ncol(continuous) != 0) {
-          for (i in 1:ncol(continuous)) {
-            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x[[1]]$sd_values[i])+x[[1]]$mean_values[i]
-          }
-        }
-      }
-    }
-    
-    
-    
+
     #:-----------------------------------------------------
     ## Set up the plot
-    
+
     combination <- rbind(newdata_plot, posteriors_plot) %>%
       mutate(Data = factor(Data))
     
@@ -249,34 +228,14 @@ plot_ggpairs <- function(x, newdata, iterations, nburn, compare_chains = FALSE, 
       }
     }
     
+    ## 'predict_dpmm_fit' already returns continuous predictions on their
+    ## original scale (destandardised internally), so no further conversion
+    ## is needed here.
     posteriors_plot <- cbind(posteriors[[1]], Data = "DPMM")
-    
-    #if values were standardised, bring them back to normal
-    if (inherits(x, "dpmm_fit")) {
-      if (x$standardise == TRUE) {
-        continuous <- dplyr::select(x$dataset, where(is.numeric))
-        if (ncol(continuous) != 0) {
-          for (i in 1:ncol(continuous)) {
-            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x$sd_values[i])+x$mean_values[i]
-          }
-        }
-      }
-    } else {
-      if (x[[1]]$standardise == TRUE) {
-        continuous <- dplyr::select(x[[1]]$dataset, where(is.numeric))
-        if (ncol(continuous) != 0) {
-          for (i in 1:ncol(continuous)) {
-            posteriors_plot[,colnames(continuous)[i]] <- (posteriors_plot[,colnames(continuous)[i]]*x[[1]]$sd_values[i])+x[[1]]$mean_values[i]
-          }
-        }
-      }
-    }
-    
-    
-    
+
     #:-----------------------------------------------------
     ## Set up the plot
-    
+
     if (compare_chains == TRUE) {
       combination <- posteriors_plot %>%
         mutate(Chain = factor(rep(paste("Chain", seq(1, x$mcmc_chains, 1)), each = length(iterations))))

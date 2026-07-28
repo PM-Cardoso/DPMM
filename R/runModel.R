@@ -1111,7 +1111,7 @@ runModel <- function(dataset, mcmc_iterations = 2500, thinning = 1, L = 10, mcmc
                  nburnin = 0,
                  thin = thinning,
                  nchains = mcmc_chains,
-                 setSeed = if (!is.null(seed)) rep(seed, mcmc_chains) else FALSE,
+                 setSeed = if (!is.null(seed)) seed + seq_len(mcmc_chains) - 1 else FALSE,
                  progressBar = TRUE,
                  summary = FALSE,
                  samplesAsCodaMCMC = TRUE)

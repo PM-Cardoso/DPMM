@@ -24,7 +24,9 @@ predict_dpmm_fit(
 \item{...}{other parameters used in 'posterior.dpmm'}
 }
 \value{
-A list with n entries for n rows with missingness, each entry is a dataframe with the sampled missing values.
+A list with n entries for n rows with missingness, each entry is a dataframe with the sampled missing values, in the same
+  row order as 'newdata'. Continuous values are automatically converted back to their original scale, regardless of whether the
+  model was fitted with 'standardise = TRUE'.
 }
 \description{
 Predict missing values from the fitted DPMM.

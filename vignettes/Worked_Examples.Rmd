@@ -92,16 +92,13 @@ for (i in 1:length(posteriors.prediction)) {
 }
 ```
 
-We then standardise the original values to match the standardisation in the DPMM.
-
-```{r, message = FALSE, warning = FALSE}
-standardised_values <- (dataset_missing[rows,"X1"]-posteriors$mean_values[1])/posteriors$sd_values[1]
-```
+'predict_dpmm_fit' automatically converts continuous predictions back to their original scale, so we can compare them directly against the true values without any manual standardisation.
 
 Lastly, we plot the credible intervals against the true values.
 
 ```{r, message = FALSE, warning = FALSE}
-cbind(standardised_values,low_q, median_q,high_q) %>%
+observed_values <- dataset_missing[rows,"X1"]
+cbind(observed_values,low_q, median_q,high_q) %>%
   as.data.frame() %>%
    rlang::set_names(c("observed", "low","median","high")) %>%
   ggplot() +
@@ -295,16 +292,13 @@ for (i in 1:length(posteriors.prediction)) {
 }
 ```
 
-We then standardise the original values to match the standardisation in the DPMM.
-
-```{r, message = FALSE, warning = FALSE}
-standardised_values <- (dataset_missing[rows,"X2"]-posteriors$mean_values[2])/posteriors$sd_values[2]
-```
+'predict_dpmm_fit' automatically converts continuous predictions back to their original scale, so we can compare them directly against the true values without any manual standardisation.
 
 Lastly, we plot the credible intervals against the true values.
 
 ```{r, message = FALSE, warning = FALSE}
-cbind(standardised_values,low_q, median_q,high_q) %>%
+observed_values <- dataset_missing[rows,"X2"]
+cbind(observed_values,low_q, median_q,high_q) %>%
   as.data.frame() %>%
    rlang::set_names(c("observed", "low","median","high")) %>%
   ggplot() +
